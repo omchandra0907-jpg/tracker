@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Threat Intel Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; }
+        #cy { width: 100%; height: 500px; background-color: #1e293b; border-radius: 8px; }
+        .target-card { cursor: pointer; transition: all 0.2s; }
+        .target-card:hover { transform: translateY(-2px); border-color: #22d3ee; }
+        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; }
+    </style>
+</head>
+<body class="p-8">
+    <h1 class="text-3xl font-bold mb-6 text-cyan-400">SIH De-Anonymization Dashboard</h1>
+    
+    <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="flex flex-col h-[500px]">
+            <h2 class="text-xl font-semibold mb-4">Suspect Profiles</h2>
+            <input type="text" id="searchInput" placeholder="Search aliases or names..." 
+                   class="w-full p-2 mb-4 bg-slate-800 border border-slate-600 rounded text-white focus:outline-none focus:border-cyan-400">
+            <div id="targets" class="space-y-4 overflow-y-auto pr-2 pb-4 flex-grow"></div>
+        </div>
+        
+        <div class="col-span-2 p-6 bg-slate-800 rounded-lg h-[500px]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Entity Relationship Graph</h2>
+                <span id="activeTargetLabel" class="text-sm font-bold text-cyan-400 hidden"></span>
+            </div>
+            <div id="cy">
+                <div class="empty-state text-lg">Select a suspect profile to generate the relationship graph.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalIntelligenceData = [];
+
+        fetch('/api/v1/analyze')
+            .then(res => res.json())
+            .then(data => {
+                globalIntelligenceData = data.results;
+                // Render an empty list on initial load
+                renderTargetList([]); 
+            });
+
+        function renderTargetList(threats) {
+            const targetsDiv = document.getElementById('targets');
+            targetsDiv.innerHTML = '';
+
+            // Display a prompt if the search is empty
+            if (threats.length === 0) {
+                targetsDiv.innerHTML = '<div class="text-slate-500 italic text-center mt-10">Awaiting query. Enter an alias or name to scan the OSINT database...</div>';
+                return;
+            }
+
+            threats.forEach((threat) => {
+                threat.deanonymization_results.forEach(suspect => {
+                    const realName = suspect.suspect_name;
+                    const confidence = suspect.confidence_score;
+                    const color = confidence > 80 ? 'green' : (confidence > 40 ? 'yellow' : 'red');
+
+                    const card = document.createElement('div');
+                    card.className = `target-card p-4 bg-slate-900 rounded border border-slate-700`;
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-cyan-300 font-bold text-lg">${realName}</p>
+                                <p class="text-sm text-slate-400">Alias: <span class="text-red-400">${threat.darkweb_alias}</span></p>
+                            </div>
+                            <span class="px-2 py-1 bg-slate-800 rounded text-xs font-bold text-${color}-400 border border-${color}-400/30">
+                                ${confidence}% Match
+                            </span>
+                        </div>
+                    `;
+                    
+                    card.onclick = () => renderGraph(threat, suspect);
+                    targetsDiv.appendChild(card);
+                });
+            });
+        }
+
+        function renderGraph(threat, suspect) {
+            const alias = threat.darkweb_alias;
+            const realName = suspect.suspect_name;
+            const elements = [];
+
+            const label = document.getElementById('activeTargetLabel');
+            label.textContent = `Analyzing: ${realName}`;
+            label.classList.remove('hidden');
+
+            elements.push({ data: { id: alias, label: alias, color: '#ef4444' } });
+            elements.push({ data: { id: realName, label: realName, color: '#22c55e' } });
+
+            suspect.evidence.forEach(ev => {
+                const exactMatch = ev.split(': ')[1];
+                let nodeColor = '#3b82f6';
+                let displayLabel = exactMatch;
+
+                if (ev.includes('Blockchain')) {
+                    nodeColor = '#eab308';
+                    displayLabel = exactMatch.substring(0, 8) + '...' + exactMatch.slice(-6);
+                } else if (ev.includes('Stylometry')) {
+                    nodeColor = '#a855f7';
+                }
+                
+                elements.push({ data: { id: exactMatch, label: displayLabel, color: nodeColor } });
+                elements.push({ data: { source: alias, target: exactMatch } });
+                elements.push({ data: { source: exactMatch, target: realName } });
+            });
+
+            cytoscape({
+                container: document.getElementById('cy'),
+                elements: elements,
+                style: [
+                    { 
+                        selector: 'node', 
+                        style: { 
+                            'background-color': 'data(color)', 
+                            'label': 'data(label)', 
+                            'color': '#f8fafc',
+                            'font-size': '11px',
+                            'font-weight': 'bold',
+                            'text-valign': 'bottom',
+                            'text-margin-y': 6,
+                            'text-wrap': 'wrap',
+                            'text-max-width': '100px',
+                            'text-outline-color': '#0f172a', 
+                            'text-outline-width': 3,
+                            'width': 26,
+                            'height': 26
+                        } 
+                    },
+                    { 
+                        selector: 'edge', 
+                        style: { 
+                            'width': 2, 
+                            'line-color': '#64748b', 
+                            'target-arrow-shape': 'triangle', 
+                            'target-arrow-color': '#64748b', 
+                            'curve-style': 'bezier' 
+                        } 
+                    }
+                ],
+                layout: { 
+                    name: 'cose', 
+                    padding: 60,
+                    animate: true,
+                    nodeRepulsion: 800000,
+                    idealEdgeLength: 130,
+                    edgeElasticity: 100
+                }
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            
+            // If the search bar is cleared, revert to the empty state
+            if (query === '') {
+                renderTargetList([]);
+                return;
+            }
+            
+            const filteredData = globalIntelligenceData.map(threat => {
+                const matchesAlias = threat.darkweb_alias.toLowerCase().includes(query);
+                const matchingSuspects = threat.deanonymization_results.filter(s => 
+                    s.suspect_name.toLowerCase().includes(query)
+                );
+
+                if (matchesAlias || matchingSuspects.length > 0) {
+                    return {
+                        ...threat,
+                        deanonymization_results: matchesAlias ? threat.deanonymization_results : matchingSuspects
+                    };
+                }
+                return null;
+            }).filter(Boolean);
+
+            renderTargetList(filteredData);
+        });
+    </script>
+</body>
+</html>

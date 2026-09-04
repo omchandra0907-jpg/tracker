@@ -1,0 +1,98 @@
+[
+  {
+    "real_name": "Maksim Galochkin",
+    "surface_alias": "Bentley",
+    "platform": "Conti Jabber",
+    "known_emails": ["bentley_crypter@protonmail.com"],
+    "known_wallets": ["1BentJeyCryptABC123DEF456GH789JK"],
+    "stylometry_markers": ["fud", "crypter", "av bypass", "jabber"]
+  },
+  {
+    "real_name": "Mikhail Pavlovich Matveev",
+    "surface_alias": "Wazawaka",
+    "platform": "XSS / Twitter",
+    "known_emails": ["wazawaka@exploit.in"],
+    "known_wallets": ["1WazawakaEscrow123456789ABCDEFGH"],
+    "stylometry_markers": ["bro", "escrow", "vouch", "privnote"]
+  },
+  {
+    "real_name": "Dmitry Khoroshev",
+    "surface_alias": "LockBitSupp",
+    "platform": "LockBit Operations",
+    "known_emails": ["supp_admin@lockbit.io"],
+    "known_wallets": ["1LockBitSuppAddress99281746283748"],
+    "stylometry_markers": ["affiliate", "bug bounty", "negotiator", "onionmail"]
+  },
+  {
+    "real_name": "Maksim Yakubets",
+    "surface_alias": "Aqua",
+    "platform": "Evil Corp",
+    "known_emails": ["drider_ops@protonmail.com"],
+    "known_wallets": ["1AquabotnetMaster99384719284728A"],
+    "stylometry_markers": ["drider", "botnet", "traffic dump", "banker"]
+  },
+  {
+    "real_name": "Park Jin Hyok",
+    "surface_alias": "Crypton",
+    "platform": "Lazarus Group",
+    "known_emails": ["crypto_heist@tutanota.com"],
+    "known_wallets": ["1LazarusVauJtBtcAddress99281746"],
+    "stylometry_markers": ["heist", "swap", "recon", "dprk"]
+  },
+  {
+    "real_name": "Dmytro Rashevskyi",
+    "surface_alias": "FirstVPN_Admin",
+    "platform": "Infrastructure Provider",
+    "known_emails": ["admin@firstvpn.net"],
+    "known_wallets": ["1FirstVPNHostingAdminAddress992"],
+    "stylometry_markers": ["bulletproof", "anonymizer", "no logs", "opsec"]
+  },
+  {
+    "real_name": "Yevgeniy Vladimirovich Silayev",
+    "surface_alias": "Obfuscation_Master",
+    "platform": "Cryptor Vendor",
+    "known_emails": ["silayev_crypt@yandex.ru"],
+    "known_wallets": ["1SiJayevCryptorVendor8829104829"],
+    "stylometry_markers": ["obfuscator", "stub", "bypass edr", "runtime"]
+  },
+  {
+    "real_name": "Yaroslav Vasinskyi",
+    "surface_alias": "Rabotnik",
+    "platform": "Sodinokibi RaaS",
+    "known_emails": ["vasinskyi_raas@protonmail.com"],
+    "known_wallets": ["1VasinskyiRansomShare8829104829"],
+    "stylometry_markers": ["raas", "kaseya", "payload", "split"]
+  },
+  {
+    "real_name": "Elena Rostova",
+    "surface_alias": "root_admin",
+    "platform": "Exploit.in",
+    "known_emails": ["admin_root@tutanota.com"],
+    "known_wallets": ["1EJenaBrokerCoJdWaJJet882910482"],
+    "stylometry_markers": ["mirror", "database", "sql injection", "dump"]
+  },
+  {
+    "real_name": "Evgeniy Bogachev",
+    "surface_alias": "Slavik",
+    "platform": "Zeus Botnet",
+    "known_emails": ["slavik_zeus@inbox.ru"],
+    "known_wallets": ["1ZeusMasterControJJerAddr992817"],
+    "stylometry_markers": ["inject", "builder", "license key", "botmaster"]
+  },
+  {
+    "real_name": "Roman Semenov",
+    "surface_alias": "MixerLead",
+    "platform": "Tornado Cash Dev",
+    "known_emails": ["semenov_dev@protonmail.com"],
+    "known_wallets": ["1MixerObfuscationNode9928174628"],
+    "stylometry_markers": ["relayer", "privacy pool", "obfuscation", "mixer"]
+  },
+  {
+    "real_name": "Armando de Jesus Ojeda Aviles",
+    "surface_alias": "Cartel_Launderer",
+    "platform": "Sinaloa Crypto Cell",
+    "known_emails": ["ojeda_conversion@countermail.com"],
+    "known_wallets": ["1SinaJoaJaunderNetwork993847192"],
+    "stylometry_markers": ["bulk cash", "conversion", "laundering", "p2p"]
+  }
+]
