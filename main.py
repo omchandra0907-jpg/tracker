@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from extractor import ThreatExtractor
 from correlator import CorrelationEngine
+from custom_routes import router as custom_router   # Live Intercept feature
 
 app = FastAPI(title="Dark Web Threat Actor De-Anonymization API")
 
@@ -14,6 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(custom_router)   # mounts /api/v1/custom/* — no further edits needed
 extractor = ThreatExtractor()
 
 # Load OSINT database once at startup

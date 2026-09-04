@@ -86,6 +86,50 @@
             word-break: break-all;
             box-shadow: 0 4px 16px rgba(0,0,0,0.5);
         }
+
+        /* ── Live Intercept Modal ──────────────────────────────────── */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,0.78);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: #0e1420;
+            border: 1px solid #1e3a5f;
+            border-radius: 10px;
+            width: 560px; max-width: 93vw;
+            padding: 24px;
+            box-shadow: 0 0 60px rgba(34,211,238,0.1), 0 24px 64px rgba(0,0,0,0.65);
+            animation: modalIn 0.18s ease-out;
+        }
+        @keyframes modalIn {
+            from { opacity:0; transform:scale(0.97) translateY(8px); }
+            to   { opacity:1; transform:scale(1)    translateY(0);   }
+        }
+        .preset-btn {
+            font-size:10px; padding:4px 10px; border-radius:4px;
+            border:1px solid #1e3a5f; background:rgba(34,211,238,0.05);
+            color:#38bdf8; cursor:pointer;
+            transition:background 0.15s, border-color 0.15s;
+        }
+        .preset-btn:hover { background:rgba(34,211,238,0.13); border-color:rgba(34,211,238,0.4); }
+        .intercept-textarea {
+            width:100%; height:136px;
+            background:#080c14; border:1px solid #1e293b;
+            border-radius:6px; color:#e2e8f0;
+            font-family:ui-monospace,monospace; font-size:11px;
+            padding:10px 12px; resize:vertical; outline:none;
+            transition:border-color 0.15s; line-height:1.65;
+        }
+        .intercept-textarea:focus { border-color:rgba(34,211,238,0.4); }
+        .intercept-toast {
+            position:fixed; bottom:24px; right:24px; z-index:600;
+            padding:10px 16px; border-radius:7px; font-size:12px; font-weight:600;
+            background:#0e1420; border:1px solid rgba(34,211,238,0.35);
+            color:#22d3ee; box-shadow:0 0 24px rgba(34,211,238,0.15);
+            animation:modalIn 0.18s ease-out;
+        }
     </style>
 </head>
 <body>
@@ -111,6 +155,15 @@
              padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
             <span id="stats-count">0</span> actors analyzed
         </div>
+        <button onclick="openInterceptModal()"
+                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;
+                       border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);
+                       color:#22d3ee;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;
+                       box-shadow:0 0 10px rgba(34,211,238,0.1);"
+                onmouseover="this.style.background='rgba(34,211,238,0.14)';this.style.boxShadow='0 0 18px rgba(34,211,238,0.22)'"
+                onmouseout="this.style.background='rgba(34,211,238,0.07)';this.style.boxShadow='0 0 10px rgba(34,211,238,0.1)'">
+            + Intercept Raw Post
+        </button>
     </div>
 </header>
 
@@ -184,23 +237,25 @@ let activeCard = null;
 let cy = null;
 const tooltip = document.getElementById('cy-tooltip');
 
-/* ── Boot: fetch analysis ───────────────────────────────────── */
+/* ── Boot: parallel-load mock feed + custom intercepts ──────────── */
 const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.port !== ''))
     ? 'http://127.0.0.1:8000'
     : '';
 
-fetch(`${API_BASE}/api/v1/analyze`)
-    .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-    })
-    .then(data => {
-        globalData = data.results;
-        document.getElementById('stats-count').textContent = data.threat_actors_analyzed;
+function bootLoadFeeds() {
+    Promise.all([
+        fetch(`${API_BASE}/api/v1/analyze`)
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        fetch(`${API_BASE}/api/v1/custom/feed`)
+            .then(r => r.ok ? r.json() : { results: [] })
+            .catch(() => ({ results: [] })),   // silently ignore if router not mounted yet
+    ]).then(([mockData, customData]) => {
+        // Custom intercepts always appear at the top
+        globalData = [...(customData.results || []), ...(mockData.results || [])];
+        document.getElementById('stats-count').textContent = globalData.length;
         document.getElementById('stats-badge').style.display = '';
         renderList(globalData);
-    })
-    .catch(err => {
+    }).catch(() => {
         document.getElementById('targets').innerHTML =
             `<div style="color:#ef4444;font-size:12px;text-align:center;padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;margin-top:12px;">
                 <p style="font-weight:600;margin-bottom:6px;">⚠ Backend API is not running</p>
@@ -209,6 +264,9 @@ fetch(`${API_BASE}/api/v1/analyze`)
                 <p style="color:#64748b;font-size:10px;margin-top:8px;">Then visit <a href="http://localhost:8000" target="_blank" style="color:#22d3ee;text-decoration:underline;">http://localhost:8000</a></p>
             </div>`;
     });
+}
+
+bootLoadFeeds();
 
 /* ── Helpers ────────────────────────────────────────────────── */
 function esc(str) {
@@ -243,6 +301,15 @@ function renderList(threats) {
         const card = document.createElement('div');
         card.className = 'suspect-card';
         card.style.padding = '10px 11px';
+
+        // Badge only shown for user-submitted live intercepts
+        const customBadge = t.is_custom
+            ? `<span style="font-size:9px;font-weight:700;color:#22d3ee;letter-spacing:0.04em;
+                            border:1px solid rgba(34,211,238,0.4);padding:1px 5px;border-radius:3px;
+                            background:rgba(34,211,238,0.08);display:inline-block;margin-top:3px;">
+                   ● LIVE INTERCEPT</span>`
+            : '';
+
         card.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div style="flex:1;min-width:0;padding-right:8px;">
@@ -251,6 +318,7 @@ function renderList(threats) {
                     <p style="font-size:10px;color:#475569;margin-top:2px;">alias:
                         <span style="color:#f87171;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span>
                     </p>
+                    ${customBadge}
                 </div>
                 <span style="font-size:10px;font-weight:700;color:${col.fill};
                              border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;
@@ -450,6 +518,199 @@ document.getElementById('searchInput').addEventListener('input', e => {
     });
     renderList(filtered);
 });
+
+/* ── Live Intercept Modal ────────────────────────────────────── */
+const PRESETS = {
+    conti: {
+        author: 'shadow_broker_99',
+        content: 'Need a FUD crypter. AV bypass must be 100%. Escrow accepted. Contact bentley_crypter@protonmail.com. Payment to 1BentJeyCryptABC123DEF456GH789JK. Jabber preferred for opsec.'
+    },
+    lockbit: {
+        author: 'anon_affiliate_01',
+        content: 'LockBit affiliate program recruiting. Bug bounty rewards active. Contact supp_admin@lockbit.io for negotiations. Payouts processed via 1LockBitSuppAddress99281746283748.'
+    },
+    clean: {
+        author: 'random_user_404',
+        content: 'Looking for someone to help with general network config. DM me on Telegram @netconfig99 for pricing. Cash only, no crypto.'
+    }
+};
+
+function openInterceptModal() {
+    document.getElementById('interceptModal').style.display = 'flex';
+    document.getElementById('interceptAlias').value   = '';
+    document.getElementById('interceptContent').value = '';
+    document.getElementById('interceptError').style.display = 'none';
+    setTimeout(() => document.getElementById('interceptContent').focus(), 60);
+}
+
+function closeInterceptModal() {
+    document.getElementById('interceptModal').style.display = 'none';
+}
+
+function loadPreset(key) {
+    const p = PRESETS[key];
+    if (!p) return;
+    document.getElementById('interceptAlias').value   = p.author;
+    document.getElementById('interceptContent').value = p.content;
+    document.getElementById('interceptError').style.display = 'none';
+}
+
+function showToast(msg, durationMs = 3200) {
+    const t = document.createElement('div');
+    t.className = 'intercept-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), durationMs);
+}
+
+async function submitIntercept() {
+    const alias   = document.getElementById('interceptAlias').value.trim();
+    const content = document.getElementById('interceptContent').value.trim();
+    const errDiv  = document.getElementById('interceptError');
+    const btn     = document.getElementById('interceptSubmitBtn');
+
+    errDiv.style.display = 'none';
+
+    if (content.length < 5) {
+        errDiv.textContent = 'Please enter at least 5 characters of intercepted text.';
+        errDiv.style.display = 'block';
+        return;
+    }
+
+    btn.textContent = 'Analyzing…';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/custom/analyze`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ author: alias || 'UNKNOWN_ACTOR', content })
+        });
+
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const { result } = await res.json();
+
+        closeInterceptModal();
+
+        // Merge new intercept at the very front of the dataset
+        globalData.unshift(result);
+        document.getElementById('stats-count').textContent = globalData.length;
+
+        // Re-render sidebar with the new entry on top
+        renderList(globalData);
+
+        if (result.deanonymization_results && result.deanonymization_results.length > 0) {
+            // Auto-click the first card (our new intercept's top match)
+            const firstCard = document.getElementById('targets').querySelector('.suspect-card');
+            if (firstCard) {
+                firstCard.click();
+                firstCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            showToast(`⚡ Intercept analyzed — ${result.deanonymization_results.length} suspect(s) matched`);
+        } else {
+            // IOCs extracted but no known suspects matched
+            const iocCount = Object.values(result.extracted_indicators).flat().length;
+            showToast(`⚠ No known suspects matched. ${iocCount} IOC(s) extracted.`);
+        }
+
+    } catch (err) {
+        errDiv.textContent = `Analysis failed: ${err.message}`;
+        errDiv.style.display = 'block';
+    } finally {
+        btn.textContent = '⚡ Analyze & Correlate';
+        btn.disabled = false;
+    }
+}
+
+// Close modal on backdrop click or Escape key
+document.getElementById('interceptModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('interceptModal')) closeInterceptModal();
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeInterceptModal();
+});
 </script>
+
+<!-- ── Live Intercept Modal ────────────────────────────────────── -->
+<div id="interceptModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+            <div>
+                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">⚡ Live Intercept Analysis</h2>
+                <p style="font-size:11px;color:#475569;margin-top:3px;">
+                    Paste any raw dark web post, chat log, or ransom note to de-anonymize it in real time.
+                </p>
+            </div>
+            <button onclick="closeInterceptModal()"
+                    style="background:none;border:none;color:#475569;font-size:20px;line-height:1;
+                           cursor:pointer;padding:0 0 0 16px;transition:color 0.15s;"
+                    onmouseover="this.style.color='#94a3b8'"
+                    onmouseout="this.style.color='#475569'">✕</button>
+        </div>
+
+        <!-- Alias -->
+        <div style="margin-bottom:12px;">
+            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;
+                          letter-spacing:0.06em;display:block;margin-bottom:5px;">
+                Actor Alias / Source Handle
+            </label>
+            <input id="interceptAlias" type="text" placeholder="e.g. shadow_broker_99  (optional)"
+                   style="width:100%;padding:8px 10px;background:#080c14;border:1px solid #1e293b;
+                          border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;
+                          font-family:ui-monospace,monospace;transition:border-color 0.15s;"
+                   onfocus="this.style.borderColor='rgba(34,211,238,0.4)'"
+                   onblur="this.style.borderColor='#1e293b'">
+        </div>
+
+        <!-- Raw text -->
+        <div style="margin-bottom:14px;">
+            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;
+                          letter-spacing:0.06em;display:block;margin-bottom:5px;">
+                Raw Intercepted Text <span style="color:#ef4444;">*</span>
+            </label>
+            <textarea id="interceptContent" class="intercept-textarea"
+                      placeholder="Paste forum post, Telegram log, ransom note, or any unstructured text here…"></textarea>
+        </div>
+
+        <!-- Quick presets -->
+        <div style="margin-bottom:18px;">
+            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;
+                      text-transform:uppercase;letter-spacing:0.06em;">Quick Demo Presets</p>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
+                <button class="preset-btn" onclick="loadPreset('lockbit')">🔒 LockBit Affiliate</button>
+                <button class="preset-btn" onclick="loadPreset('clean')">✅ Zero-Match Post</button>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="interceptError"
+             style="display:none;color:#ef4444;font-size:11px;margin-bottom:10px;
+                    padding:8px 10px;background:rgba(239,68,68,0.08);
+                    border:1px solid rgba(239,68,68,0.2);border-radius:5px;"></div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button onclick="closeInterceptModal()"
+                    style="font-size:12px;padding:7px 16px;border-radius:5px;border:1px solid #1e293b;
+                           background:transparent;color:#475569;cursor:pointer;transition:color 0.15s;"
+                    onmouseover="this.style.color='#94a3b8'"
+                    onmouseout="this.style.color='#475569'">Cancel</button>
+            <button id="interceptSubmitBtn" onclick="submitIntercept()"
+                    style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;
+                           border:1px solid rgba(34,211,238,0.4);background:rgba(34,211,238,0.1);
+                           color:#22d3ee;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;
+                           box-shadow:0 0 12px rgba(34,211,238,0.15);"
+                    onmouseover="this.style.background='rgba(34,211,238,0.2)'"
+                    onmouseout="this.style.background='rgba(34,211,238,0.1)'">
+                ⚡ Analyze &amp; Correlate
+            </button>
+        </div>
+
+    </div>
+</div>
+
 </body>
 </html>
