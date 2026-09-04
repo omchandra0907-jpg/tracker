@@ -3,96 +3,509 @@
     "real_name": "Maksim Galochkin",
     "surface_alias": "Bentley",
     "platform": "Conti Jabber",
-    "known_emails": ["bentley_crypter@protonmail.com"],
-    "known_wallets": ["1BentJeyCryptABC123DEF456GH789JK"],
-    "stylometry_markers": ["fud", "crypter", "av bypass", "jabber"]
+    "known_wallets": [
+      "1BentJeyCryptABC123DEF456GH789JK"
+    ],
+    "known_emails": [
+      "bentley_crypter@protonmail.com"
+    ],
+    "known_comms": [
+      "bentley@exploit.in"
+    ],
+    "known_onions": [
+      "contileaks7j27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "privnote",
+      "jabber"
+    ]
   },
   {
-    "real_name": "Mikhail Pavlovich Matveev",
+    "real_name": "Mikhail Matveev",
     "surface_alias": "Wazawaka",
     "platform": "XSS / Twitter",
-    "known_emails": ["wazawaka@exploit.in"],
-    "known_wallets": ["1WazawakaEscrow123456789ABCDEFGH"],
-    "stylometry_markers": ["bro", "escrow", "vouch", "privnote"]
+    "known_wallets": [
+      "1WazawakaEscrow123456789ABCDEFGH",
+      "44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A"
+    ],
+    "known_emails": [
+      "wazawaka@exploit.in"
+    ],
+    "known_comms": [
+      "@waza_support"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "bro",
+      "vouch"
+    ]
   },
   {
     "real_name": "Dmitry Khoroshev",
     "surface_alias": "LockBitSupp",
     "platform": "LockBit Operations",
-    "known_emails": ["supp_admin@lockbit.io"],
-    "known_wallets": ["1LockBitSuppAddress99281746283748"],
-    "stylometry_markers": ["affiliate", "bug bounty", "negotiator", "onionmail"]
+    "known_wallets": [
+      "1LockBitSuppAddress99281746283748"
+    ],
+    "known_emails": [
+      "supp_admin@lockbit.io"
+    ],
+    "known_comms": [
+      "A1B2C3D4E5F678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890AB"
+    ],
+    "known_onions": [
+      "lockbitapt6vx57t3eeqjofwgcglmutr3a35nyzyvhdp3qq4weewrvqd.onion"
+    ],
+    "stylometry_markers": [
+      "negotiator",
+      "onionmail"
+    ]
   },
   {
     "real_name": "Maksim Yakubets",
     "surface_alias": "Aqua",
     "platform": "Evil Corp",
-    "known_emails": ["drider_ops@protonmail.com"],
-    "known_wallets": ["1AquabotnetMaster99384719284728A"],
-    "stylometry_markers": ["drider", "botnet", "traffic dump", "banker"]
+    "known_wallets": [
+      "1AquabotnetMaster99384719284728A",
+      "TAquaBotnetMaster99384719284728A"
+    ],
+    "known_emails": [
+      "drider_ops@protonmail.com"
+    ],
+    "known_comms": [
+      "aqua_admin@jabber.ru"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "drider",
+      "banker"
+    ]
   },
   {
     "real_name": "Park Jin Hyok",
     "surface_alias": "Crypton",
     "platform": "Lazarus Group",
-    "known_emails": ["crypto_heist@tutanota.com"],
-    "known_wallets": ["1LazarusVauJtBtcAddress99281746"],
-    "stylometry_markers": ["heist", "swap", "recon", "dprk"]
+    "known_wallets": [
+      "1LazarusVauJtBtcAddress99281746"
+    ],
+    "known_emails": [
+      "crypto_heist@tutanota.com"
+    ],
+    "known_comms": [
+      "t.me/dprk_recon"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "heist",
+      "swap",
+      "recon"
+    ]
   },
   {
     "real_name": "Dmytro Rashevskyi",
     "surface_alias": "FirstVPN_Admin",
     "platform": "Infrastructure Provider",
-    "known_emails": ["admin@firstvpn.net"],
-    "known_wallets": ["1FirstVPNHostingAdminAddress992"],
-    "stylometry_markers": ["bulletproof", "anonymizer", "no logs", "opsec"]
+    "known_wallets": [
+      "1FirstVPNHostingAdminAddress992"
+    ],
+    "known_emails": [
+      "admin@firstvpn.net"
+    ],
+    "known_comms": [
+      "B2C3D4E5F678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABC"
+    ],
+    "known_onions": [
+      "bulletproofvpngy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "bulletproof",
+      "anonymizer",
+      "no logs",
+      "opsec"
+    ]
   },
   {
-    "real_name": "Yevgeniy Vladimirovich Silayev",
+    "real_name": "Yevgeniy Silayev",
     "surface_alias": "Obfuscation_Master",
     "platform": "Cryptor Vendor",
-    "known_emails": ["silayev_crypt@yandex.ru"],
-    "known_wallets": ["1SiJayevCryptorVendor8829104829"],
-    "stylometry_markers": ["obfuscator", "stub", "bypass edr", "runtime"]
+    "known_wallets": [
+      "1SiJayevCryptorVendor8829104829"
+    ],
+    "known_emails": [
+      "silayev_crypt@yandex.ru"
+    ],
+    "known_comms": [
+      "@obfuscator_ru"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "obfuscator",
+      "stub",
+      "runtime"
+    ]
   },
   {
     "real_name": "Yaroslav Vasinskyi",
     "surface_alias": "Rabotnik",
     "platform": "Sodinokibi RaaS",
-    "known_emails": ["vasinskyi_raas@protonmail.com"],
-    "known_wallets": ["1VasinskyiRansomShare8829104829"],
-    "stylometry_markers": ["raas", "kaseya", "payload", "split"]
+    "known_wallets": [
+      "1VasinskyiRansomShare8829104829"
+    ],
+    "known_emails": [
+      "vasinskyi_raas@protonmail.com"
+    ],
+    "known_comms": [
+      "rabotnik@thesecure.biz"
+    ],
+    "known_onions": [
+      "revilcorp7j27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "kaseya",
+      "split"
+    ]
   },
   {
     "real_name": "Elena Rostova",
     "surface_alias": "root_admin",
     "platform": "Exploit.in",
-    "known_emails": ["admin_root@tutanota.com"],
-    "known_wallets": ["1EJenaBrokerCoJdWaJJet882910482"],
-    "stylometry_markers": ["mirror", "database", "sql injection", "dump"]
+    "known_wallets": [
+      "1EJenaBrokerCoJdWaJJet882910482"
+    ],
+    "known_emails": [
+      "admin_root@tutanota.com"
+    ],
+    "known_comms": [],
+    "known_onions": [
+      "exploitindb7j27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "mirror",
+      "database",
+      "sql injection"
+    ]
   },
   {
     "real_name": "Evgeniy Bogachev",
     "surface_alias": "Slavik",
     "platform": "Zeus Botnet",
-    "known_emails": ["slavik_zeus@inbox.ru"],
-    "known_wallets": ["1ZeusMasterControJJerAddr992817"],
-    "stylometry_markers": ["inject", "builder", "license key", "botmaster"]
+    "known_wallets": [
+      "1ZeusMasterControJJerAddr992817"
+    ],
+    "known_emails": [
+      "slavik_zeus@inbox.ru"
+    ],
+    "known_comms": [
+      "slavik@xmpp.jp"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "inject",
+      "builder",
+      "license key"
+    ]
   },
   {
     "real_name": "Roman Semenov",
     "surface_alias": "MixerLead",
     "platform": "Tornado Cash Dev",
-    "known_emails": ["semenov_dev@protonmail.com"],
-    "known_wallets": ["1MixerObfuscationNode9928174628"],
-    "stylometry_markers": ["relayer", "privacy pool", "obfuscation", "mixer"]
+    "known_wallets": [
+      "1MixerObfuscationNode9928174628"
+    ],
+    "known_emails": [
+      "semenov_dev@protonmail.com"
+    ],
+    "known_comms": [
+      "@mixer_admin"
+    ],
+    "known_onions": [
+      "tornadocashvpngy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "relayer",
+      "privacy pool"
+    ]
   },
   {
-    "real_name": "Armando de Jesus Ojeda Aviles",
+    "real_name": "Armando Ojeda Aviles",
     "surface_alias": "Cartel_Launderer",
     "platform": "Sinaloa Crypto Cell",
-    "known_emails": ["ojeda_conversion@countermail.com"],
-    "known_wallets": ["1SinaJoaJaunderNetwork993847192"],
-    "stylometry_markers": ["bulk cash", "conversion", "laundering", "p2p"]
+    "known_wallets": [
+      "1SinaJoaJaunderNetwork993847192",
+      "TCartelLaunderer99384719284728A"
+    ],
+    "known_emails": [
+      "ojeda_conversion@countermail.com"
+    ],
+    "known_comms": [
+      "C3D4E5F678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCD"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "bulk cash",
+      "conversion",
+      "laundering",
+      "p2p"
+    ]
+  },
+  {
+    "real_name": "Aleksandr Sikerin",
+    "surface_alias": "Bravo",
+    "platform": "ALPHV BlackCat",
+    "known_wallets": [
+      "1A1phvB1ackCatRansomNet9938471"
+    ],
+    "known_emails": [
+      "bravo_alphv@protonmail.com"
+    ],
+    "known_comms": [
+      "@alphv_support"
+    ],
+    "known_onions": [
+      "alphvleaksvpngy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "rust",
+      "extortion"
+    ]
+  },
+  {
+    "real_name": "Vitaly Kovalev",
+    "surface_alias": "Bentley_Ops",
+    "platform": "Trickbot Gang",
+    "known_wallets": [
+      "1TrickbotOpsWallet993847192847"
+    ],
+    "known_emails": [
+      "trickbot_ops@tutanota.com"
+    ],
+    "known_comms": [
+      "trickbot@exploit.in"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "banking trojan",
+      "lateral movement"
+    ]
+  },
+  {
+    "real_name": "Denis Kulkov",
+    "surface_alias": "Try2Check",
+    "platform": "Carding Validator",
+    "known_wallets": [
+      "1Try2CheckCardingVault99384719"
+    ],
+    "known_emails": [
+      "admin@try2check.com"
+    ],
+    "known_comms": [
+      "@try2check_admin"
+    ],
+    "known_onions": [
+      "try2checkvpngy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "cvv",
+      "validity rate"
+    ]
+  },
+  {
+    "real_name": "Igor Turashev",
+    "surface_alias": "Enki",
+    "platform": "Dridex Core",
+    "known_wallets": [
+      "1DridexDevVault99384719284728A"
+    ],
+    "known_emails": [
+      "enki_dev@protonmail.com"
+    ],
+    "known_comms": [
+      "enki_dridex@jabber.ru"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "macros",
+      "maldoc"
+    ]
+  },
+  {
+    "real_name": "Rinat Zandiev",
+    "surface_alias": "Garnet",
+    "platform": "DarkSide Affiliate",
+    "known_wallets": [
+      "1DarkSideGarnetWallet993847192"
+    ],
+    "known_emails": [
+      "garnet_darkside@tutanota.com"
+    ],
+    "known_comms": [
+      "D4E5F678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDE"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "double extortion",
+      "pipeline"
+    ]
+  },
+  {
+    "real_name": "Alexey Bilyuchenko",
+    "surface_alias": "Admin_WEX",
+    "platform": "BTC-e Exchange",
+    "known_wallets": [
+      "1WexExchangeColdWallet99384719"
+    ],
+    "known_emails": [
+      "admin@btce.com"
+    ],
+    "known_comms": [
+      "@wex_admin"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "liquidation",
+      "fiat gateway"
+    ]
+  },
+  {
+    "real_name": "Sandu Diaconu",
+    "surface_alias": "Bulldozer",
+    "platform": "RedLine Stealer",
+    "known_wallets": [
+      "1RedLineStealerVault9938471928"
+    ],
+    "known_emails": [
+      "bulldozer_redline@protonmail.com"
+    ],
+    "known_comms": [
+      "bulldozer@exploit.in"
+    ],
+    "known_onions": [
+      "redlinelogsgy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "browser logs",
+      "cookies"
+    ]
+  },
+  {
+    "real_name": "Danil Potekhin",
+    "surface_alias": "PhishKing",
+    "platform": "Crypto Phisher",
+    "known_wallets": [
+      "1PhishKingLootVault99384719284"
+    ],
+    "known_emails": [
+      "phishking@tutanota.com"
+    ],
+    "known_comms": [
+      "@phishking_official"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "seed phrase",
+      "drainer"
+    ]
+  },
+  {
+    "real_name": "Sergey Zolotarev",
+    "surface_alias": "Kasper",
+    "platform": "Royal Ransomware",
+    "known_wallets": [
+      "1Roya1RansomwareVau1t99384719"
+    ],
+    "known_emails": [
+      "kasper_royal@protonmail.com"
+    ],
+    "known_comms": [
+      "kasper@thesecure.biz"
+    ],
+    "known_onions": [
+      "royalransomvpngy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "callback",
+      "partial encryption"
+    ]
+  },
+  {
+    "real_name": "Oleg Koshkin",
+    "surface_alias": "Cryptoboy",
+    "platform": "Crypting Service",
+    "known_wallets": [
+      "1CryptoboyFUDWallet99384719284"
+    ],
+    "known_emails": [
+      "cryptoboy@exploit.in"
+    ],
+    "known_comms": [
+      "E5F678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "scantime",
+      "memory injection"
+    ]
+  },
+  {
+    "real_name": "Boris Chen",
+    "surface_alias": "PandaBroker",
+    "platform": "Volt Typhoon IAB",
+    "known_wallets": [
+      "1PandaBrokerIABWallet993847192"
+    ],
+    "known_emails": [
+      "panda_broker@tutanota.com"
+    ],
+    "known_comms": [
+      "t.me/panda_iab"
+    ],
+    "known_onions": [],
+    "stylometry_markers": [
+      "citrix",
+      "fortinet",
+      "living off the land"
+    ]
+  },
+  {
+    "real_name": "Tariq Al-Mansoor",
+    "surface_alias": "ZeroTrace",
+    "platform": "Bulletproof XMPP",
+    "known_wallets": [
+      "1ZeroTraceHostingWallet9938471"
+    ],
+    "known_emails": [
+      "admin@zerotrace.net"
+    ],
+    "known_comms": [
+      "admin@jabber.ru"
+    ],
+    "known_onions": [
+      "zerotracexmppgy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "offshore",
+      "dmca ignored"
+    ]
+  },
+  {
+    "real_name": "Ilya Sachkov",
+    "surface_alias": "IntelBroker_Shadow",
+    "platform": "Exploit Broker",
+    "known_wallets": [
+      "1IntelBrokerShadowVault9938471"
+    ],
+    "known_emails": [
+      "intelbroker@protonmail.com"
+    ],
+    "known_comms": [
+      "@intelbroker_shadow"
+    ],
+    "known_onions": [
+      "intelbrokerdbgy27464y6g26.onion"
+    ],
+    "stylometry_markers": [
+      "0day",
+      "poc"
+    ]
   }
 ]

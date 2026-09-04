@@ -6,123 +6,112 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <style>
-        /* ── Base ─────────────────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            background-color: #080c14;
+            background-color: #070a12;
             color: #e2e8f0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* ── Graph canvas – Obsidian void aesthetic ───────────────── */
         #cy {
             width: 100%;
-            height: 100%;
-            background-color: #080c14;
-            background-image:
-                radial-gradient(ellipse 60% 50% at 50% 50%,
-                    rgba(34, 211, 238, 0.025) 0%,
-                    transparent 70%);
+            height: 52%;
+            background-color: #070a12;
+            background-image: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(34, 211, 238, 0.035) 0%, transparent 75%);
         }
 
-        /* ── Suspect cards ────────────────────────────────────────── */
         .suspect-card {
             cursor: pointer;
-            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
+            transition: all 0.18s ease;
             border: 1px solid #1e293b;
-            background: rgba(15, 23, 42, 0.7);
-            border-radius: 6px;
+            background: rgba(13, 20, 36, 0.75);
+            border-radius: 7px;
         }
         .suspect-card:hover {
-            border-color: rgba(34, 211, 238, 0.35);
-            box-shadow: 0 0 14px rgba(34, 211, 238, 0.12);
+            border-color: rgba(34, 211, 238, 0.4);
+            box-shadow: 0 0 16px rgba(34, 211, 238, 0.14);
             transform: translateY(-1px);
         }
         .suspect-card.active {
             border-color: #22d3ee;
-            box-shadow: 0 0 18px rgba(34, 211, 238, 0.22);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+            background: rgba(15, 23, 42, 0.95);
         }
-
-        /* ── Confidence bar ───────────────────────────────────────── */
-        .conf-bar  { height: 2px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 7px; }
+        .conf-bar { height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 7px; }
         .conf-fill { height: 100%; border-radius: 2px; }
-
-        /* ── Legend dots ──────────────────────────────────────────── */
         .ldot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
-        /* ── Scrollbar ────────────────────────────────────────────── */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-
-        /* ── Empty graph placeholder ──────────────────────────────── */
-        .empty-graph {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            height: 100%; gap: 14px;
-            color: #1e293b; font-size: 13px;
-            user-select: none;
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            overflow-y: auto;
+            padding: 4px 6px 14px 4px;
+            align-content: start;
         }
+        .matrix-card {
+            background: #0d1424;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .matrix-card:hover { border-color: rgba(34, 211, 238, 0.25); }
 
-        /* ── Floating tooltip ─────────────────────────────────────── */
-        #cy-tooltip {
-            position: fixed;
-            padding: 5px 10px;
-            background: #0e1420;
-            border: 1px solid #334155;
-            border-radius: 5px;
-            font-size: 11px;
-            font-family: ui-monospace, monospace;
+        .info-tip {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 9px;
+            font-weight: bold;
             color: #94a3b8;
-            pointer-events: none;
-            display: none;
-            z-index: 9999;
-            max-width: 260px;
-            word-break: break-all;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            background: #1e293b;
+            border-radius: 4px;
+            padding: 0 4px;
+            margin-left: 6px;
+            cursor: help;
         }
+        .info-tip:hover { color: #22d3ee; background: #0f172a; border: 1px solid #22d3ee; }
 
-        /* ── Live Intercept Modal ──────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080c14; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        .graph-ctrl-btn {
+            background: #0e1626; border: 1px solid #1e293b; color: #94a3b8; border-radius: 5px;
+            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; cursor: pointer; transition: all 0.15s;
+        }
+        .graph-ctrl-btn:hover { border-color: #22d3ee; color: #22d3ee; background: #131e33; }
+
+        #cy-tooltip {
+            position: fixed; padding: 5px 11px; background: #0e1420; border: 1px solid #334155;
+            border-radius: 6px; font-size: 11px; font-family: ui-monospace, monospace;
+            color: #94a3b8; pointer-events: none; display: none; z-index: 9999;
+            max-width: 320px; word-break: break-all; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
         .modal-overlay {
-            position: fixed; inset: 0; z-index: 500;
-            background: rgba(0,0,0,0.78);
-            backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center;
+            position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
         }
         .modal-box {
-            background: #0e1420;
-            border: 1px solid #1e3a5f;
-            border-radius: 10px;
-            width: 560px; max-width: 93vw;
-            padding: 24px;
+            background: #0e1420; border: 1px solid #1e3a5f; border-radius: 10px;
+            width: 560px; max-width: 93vw; padding: 24px;
             box-shadow: 0 0 60px rgba(34,211,238,0.1), 0 24px 64px rgba(0,0,0,0.65);
-            animation: modalIn 0.18s ease-out;
-        }
-        @keyframes modalIn {
-            from { opacity:0; transform:scale(0.97) translateY(8px); }
-            to   { opacity:1; transform:scale(1)    translateY(0);   }
         }
         .preset-btn {
-            font-size:10px; padding:4px 10px; border-radius:4px;
-            border:1px solid #1e3a5f; background:rgba(34,211,238,0.05);
-            color:#38bdf8; cursor:pointer;
-            transition:background 0.15s, border-color 0.15s;
+            font-size:10px; padding:4px 10px; border-radius:4px; border:1px solid #1e3a5f;
+            background:rgba(34,211,238,0.05); color:#38bdf8; cursor:pointer; transition: all 0.15s;
         }
         .preset-btn:hover { background:rgba(34,211,238,0.13); border-color:rgba(34,211,238,0.4); }
-        .intercept-textarea {
-            width:100%; height:136px;
-            background:#080c14; border:1px solid #1e293b;
-            border-radius:6px; color:#e2e8f0;
-            font-family:ui-monospace,monospace; font-size:11px;
-            padding:10px 12px; resize:vertical; outline:none;
-            transition:border-color 0.15s; line-height:1.65;
-        }
-        .intercept-textarea:focus { border-color:rgba(34,211,238,0.4); }
         .drop-zone {
             border: 1px dashed #334155; border-radius: 6px;
             padding: 14px; text-align: center; cursor: pointer;
@@ -133,206 +122,413 @@
             border-color: rgba(34,211,238,0.5);
             background: rgba(34,211,238,0.04);
         }
+        .intercept-textarea {
+            width:100%; height:136px; background:#080c14; border:1px solid #1e293b;
+            border-radius:6px; color:#e2e8f0; font-family:ui-monospace,monospace; font-size:11px;
+            padding:10px 12px; resize:vertical; outline:none; line-height:1.65;
+        }
         .intercept-toast {
-            position:fixed; bottom:24px; right:24px; z-index:600;
-            padding:10px 16px; border-radius:7px; font-size:12px; font-weight:600;
-            background:#0e1420; border:1px solid rgba(34,211,238,0.35);
-            color:#22d3ee; box-shadow:0 0 24px rgba(34,211,238,0.15);
-            animation:modalIn 0.18s ease-out;
+            position:fixed; bottom:24px; right:24px; z-index:600; padding:10px 16px;
+            border-radius:7px; font-size:12px; font-weight:600; background:#0e1420;
+            border:1px solid rgba(34,211,238,0.35); color:#22d3ee; box-shadow:0 0 24px rgba(34,211,238,0.15);
         }
     </style>
 </head>
 <body>
 
-<!-- Floating tooltip -->
 <div id="cy-tooltip"></div>
 
-<!-- ── Top bar ────────────────────────────────────────────────── -->
-<header style="padding:14px 24px;border-bottom:1px solid #0f172a;background:#080c14;
-               display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+<!-- Top Bar -->
+<header style="padding:13px 24px;border-bottom:1px solid #0f172a;background:#080c14;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
     <div>
         <h1 style="font-size:18px;font-weight:700;color:#22d3ee;letter-spacing:-0.3px;">
-            ⬡ De-Anonymization Dashboard
+            ⬡ De-Anonymization Intelligence Platform
         </h1>
         <p style="font-size:11px;color:#475569;margin-top:2px;">SIH · Dark Web Threat Intelligence Platform</p>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
         <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e;"></div>
-            <span style="font-size:11px;color:#475569;">API Online</span>
+            <span style="font-size:11px;color:#475569;">AuraDB Active</span>
         </div>
-        <div id="stats-badge" style="display:none;font-size:11px;color:#475569;
-             padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
-            <span id="stats-count">0</span> actors analyzed
+        <div id="stats-badge" style="display:none;font-size:11px;color:#475569;padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
+            <span id="stats-count">0</span> profiles analyzed
         </div>
         <button onclick="openInterceptModal()"
-                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;
-                       border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);
-                       color:#22d3ee;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;
-                       box-shadow:0 0 10px rgba(34,211,238,0.1);"
-                onmouseover="this.style.background='rgba(34,211,238,0.14)';this.style.boxShadow='0 0 18px rgba(34,211,238,0.22)'"
-                onmouseout="this.style.background='rgba(34,211,238,0.07)';this.style.boxShadow='0 0 10px rgba(34,211,238,0.1)'">
+                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);color:#22d3ee;cursor:pointer;">
             + Intercept Raw Post
         </button>
     </div>
 </header>
 
-<!-- ── Main layout ────────────────────────────────────────────── -->
+<!-- Main Workspace -->
 <main style="display:flex;flex:1;overflow:hidden;">
 
-    <!-- Left: suspect list -->
-    <aside style="width:290px;min-width:290px;display:flex;flex-direction:column;
-                  border-right:1px solid #0f172a;padding:14px 12px;gap:10px;background:#080c14;">
-        <input id="searchInput" type="text" placeholder="Search aliases or names…"
-               style="width:100%;padding:8px 10px;background:#0d1424;border:1px solid #1e293b;
-                      border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;transition:border-color 0.15s;"
-               onfocus="this.style.borderColor='rgba(34,211,238,0.4)'"
-               onblur="this.style.borderColor='#1e293b'">
+    <!-- Left: Search & Suspect List -->
+    <aside style="width:315px;min-width:315px;display:flex;flex-direction:column;border-right:1px solid #0f172a;padding:14px 12px;gap:10px;background:#080c14;">
+        <div>
+            <input id="searchInput" type="text" placeholder="Search Wallet, Email, or Alias…"
+                   style="width:100%;padding:8px 10px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;"
+                   oninput="handleSearchInput(event)">
+            <div id="queryBadge" style="display:none;margin-top:6px;font-size:10px;font-family:ui-monospace,monospace;padding:2px 8px;border-radius:4px;width:fit-content;"></div>
+        </div>
         <div id="targets" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-right:2px;"></div>
     </aside>
 
-    <!-- Right: graph panel -->
-    <section style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <!-- Right: Visualizer & Factor Matrix -->
+    <section style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
 
-        <!-- Graph header with legend -->
-        <div style="display:flex;justify-content:space-between;align-items:center;
-                    padding:10px 16px;border-bottom:1px solid #0f172a;background:#0b1020;flex-shrink:0;">
+        <!-- Graph Header & Legend -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid #0f172a;background:#0a0f1d;flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:12px;font-weight:600;color:#94a3b8;">Entity Relationship Graph</span>
-                <span id="activeTargetLabel"
-                      style="display:none;font-size:10px;padding:2px 8px;
-                             background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);
-                             border-radius:20px;color:#22d3ee;"></span>
+                <span id="activeTargetLabel" style="display:none;font-size:10px;padding:2px 8px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);border-radius:20px;color:#22d3ee;"></span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#475569;">
-                <span style="display:flex;align-items:center;gap:5px;">
-                    <span class="ldot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></span> Alias
-                </span>
-                <span style="display:flex;align-items:center;gap:5px;">
-                    <span class="ldot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></span> Identity
-                </span>
-                <span style="display:flex;align-items:center;gap:5px;">
-                    <span class="ldot" style="background:#eab308;box-shadow:0 0 5px #eab308;"></span> Blockchain
-                </span>
-                <span style="display:flex;align-items:center;gap:5px;">
-                    <span class="ldot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></span> Email
-                </span>
-                <span style="display:flex;align-items:center;gap:5px;">
-                    <span class="ldot" style="background:#a855f7;box-shadow:0 0 5px #a855f7;"></span> Stylometry
-                </span>
-                <span style="color:#334155;font-size:9px;">· click node to highlight neighbours</span>
+                <span><span class="ldot" style="background:#22c55e;"></span> Target</span>
+                <span><span class="ldot" style="background:#ef4444;"></span> Alias</span>
+                <span><span class="ldot" style="background:#eab308;"></span> Crypto</span>
+                <span><span class="ldot" style="background:#3b82f6;"></span> Email</span>
+                <span><span class="ldot" style="background:#06b6d4;"></span> Comms</span>
+                <span><span class="ldot" style="background:#a855f7;"></span> Stylometry</span>
+                <span><span class="ldot" style="background:#10b981;"></span> Infrastructure</span>
             </div>
         </div>
 
-        <!-- Cytoscape container -->
-        <div id="cy">
-            <div class="empty-graph">
-                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.2">
-                    <circle cx="12" cy="12" r="3.2"/>
-                    <circle cx="3.5" cy="6" r="2"/><circle cx="20.5" cy="6" r="2"/>
+        <!-- Graph Container -->
+        <div id="cy" style="position:relative;">
+            <div class="empty-graph" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:#334155;font-size:13px;user-select:none;">
+                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.2">
+                    <circle cx="12" cy="12" r="3.2"/><circle cx="3.5" cy="6" r="2"/><circle cx="20.5" cy="6" r="2"/>
                     <circle cx="3.5" cy="18" r="2"/><circle cx="20.5" cy="18" r="2"/>
                     <line x1="11" y1="9.5" x2="5" y2="7"/><line x1="13" y1="9.5" x2="19" y2="7"/>
-                    <line x1="11" y1="14.5" x2="5" y2="17"/><line x1="13" y1="14.5" x2="19" y2="17"/>
                 </svg>
-                <span>Select a suspect profile to render the relationship graph</span>
+                <span>Select a profile from the intelligence feed to explore the graph</span>
+            </div>
+        </div>
+
+        <!-- Floating Zoom Controls -->
+        <div style="position:absolute;top:50px;right:18px;display:flex;flex-direction:column;gap:5px;z-index:20;">
+            <button class="graph-ctrl-btn" title="Zoom In" onclick="if(cy) cy.zoom(cy.zoom() * 1.25)">+</button>
+            <button class="graph-ctrl-btn" title="Zoom Out" onclick="if(cy) cy.zoom(cy.zoom() * 0.8)">−</button>
+            <button class="graph-ctrl-btn" title="Reset View" onclick="if(cy) cy.fit(undefined, 40)">⤢</button>
+        </div>
+
+        <!-- Evidence Breakdown Matrix (2-Column Grid) -->
+        <div id="matrixPanel" style="flex:1;border-top:1px solid #0f172a;background:#080c14;padding:12px 20px;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
+                <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
+                    Multi-Vector Attribution Matrix (8 Evidence Criteria)
+                </span>
+                <span id="matrixSuspectName" style="font-size:11px;color:#22d3ee;font-family:ui-monospace,monospace;">
+                    No Target Selected
+                </span>
+            </div>
+
+            <div class="matrix-grid">
+                <!-- 1. Crypto -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            ⛓ Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
+                        </span>
+                        <span id="mCryptoStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mCryptoVal" style="font-weight:700;color:#eab308;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mCryptoBar" style="height:100%;width:0%;background:#eab308;box-shadow:0 0 8px #eab308;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Email -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            ✉ Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
+                        </span>
+                        <span id="mEmailStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mEmailVal" style="font-weight:700;color:#3b82f6;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mEmailBar" style="height:100%;width:0%;background:#3b82f6;box-shadow:0 0 8px #3b82f6;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Comms -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            💬 Encrypted Comms <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">[?]</span>
+                        </span>
+                        <span id="mCommsStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mCommsVal" style="font-weight:700;color:#06b6d4;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mCommsBar" style="height:100%;width:0%;background:#06b6d4;box-shadow:0 0 8px #06b6d4;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Infrastructure -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            🌐 Dark Infrastructure <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">[?]</span>
+                        </span>
+                        <span id="mInfraStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mInfraVal" style="font-weight:700;color:#10b981;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mInfraBar" style="height:100%;width:0%;background:#10b981;box-shadow:0 0 8px #10b981;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Stylometry -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            ✍ Stylometry / Slang <span class="info-tip" title="Linguistic behavioral profiling based on unique underground forum slang, grammar quirks, and vocabulary. (Capped at 30% to prevent false positives).">[?]</span>
+                        </span>
+                        <span id="mStyloStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(168,85,247,0.1);color:#a855f7;border:1px solid rgba(168,85,247,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight (Max 30%)</span>
+                            <span id="mStyloVal" style="font-weight:700;color:#a855f7;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mStyloBar" style="height:100%;width:0%;background:#a855f7;box-shadow:0 0 8px #a855f7;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Alias Cross-Match -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            🎭 Alias Correlation <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">[?]</span>
+                        </span>
+                        <span id="mAliasStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mAliasVal" style="font-weight:700;color:#ef4444;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mAliasBar" style="height:100%;width:0%;background:#ef4444;box-shadow:0 0 8px #ef4444;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. TTPs / Role Profile -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            🛡 Threat TTP Alignment <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">[?]</span>
+                        </span>
+                        <span id="mTtpStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mTtpVal" style="font-weight:700;color:#0ea5e9;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mTtpBar" style="height:100%;width:0%;background:#0ea5e9;box-shadow:0 0 8px #0ea5e9;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. Temporal / Timezone Activity -->
+                <div class="matrix-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
+                            🕒 Temporal Activity <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">[?]</span>
+                        </span>
+                        <span id="mTempStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(244,63,94,0.1);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">0%</span>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
+                            <span>Match Weight</span>
+                            <span id="mTempVal" style="font-weight:700;color:#f43f5e;">0%</span>
+                        </div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
+                            <div id="mTempBar" style="height:100%;width:0%;background:#f43f5e;box-shadow:0 0 8px #f43f5e;transition:width 0.35s;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 </main>
 
+<!-- Live Intercept Modal (Includes Teammate's Drag & Drop Zone) -->
+<div id="interceptModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+            <div>
+                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">⚡ Live Intercept Analysis</h2>
+                <p style="font-size:11px;color:#475569;margin-top:3px;">Submit unstructured text or upload a forensic file to trigger de-anonymization.</p>
+            </div>
+            <button onclick="closeInterceptModal()" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;">✕</button>
+        </div>
+
+        <div style="margin-bottom:12px;">
+            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Source Handle / Forum Alias</label>
+            <input id="interceptAlias" type="text" placeholder="e.g. shadow_broker_99  (optional)"
+                   style="width:100%;padding:8px 10px;background:#080c14;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;">
+        </div>
+
+        <!-- Teammate's Drag and Drop Zone -->
+        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" style="display:none;" accept=".txt,.log,.json,.eml,.csv,.md" onchange="handleFileSelect(event)">
+            <p style="font-size:11px;color:#94a3b8;">
+                📁 <span style="color:#22d3ee;font-weight:600;">Click to upload</span> or drag &amp; drop a file
+            </p>
+            <p style="font-size:9px;color:#475569;margin-top:2px;">.txt · .log · .json · .eml · .csv · .md</p>
+            <div id="fileInfoBadge" style="display:none;margin-top:7px;">
+                <span id="fileNameDisplay" style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);padding:2px 9px;border-radius:4px;"></span>
+            </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Raw Text Content *</label>
+            <textarea id="interceptContent" class="intercept-textarea" placeholder="Paste forum post, chat dump, or ransom note…"></textarea>
+        </div>
+
+        <div style="margin-bottom:18px;">
+            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;text-transform:uppercase;">Quick Presets</p>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
+                <button class="preset-btn" onclick="loadPreset('lockbit')">🔒 LockBit Affiliate</button>
+                <button class="preset-btn" onclick="loadPreset('clean')">✅ Zero-Match Post</button>
+            </div>
+        </div>
+
+        <div id="interceptError" style="display:none;color:#ef4444;font-size:11px;margin-bottom:10px;padding:8px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:5px;"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button onclick="closeInterceptModal()" style="font-size:12px;padding:7px 16px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#475569;cursor:pointer;">Cancel</button>
+            <button id="interceptSubmitBtn" onclick="submitIntercept()" style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;border:1px solid rgba(34,211,238,0.4);background:rgba(34,211,238,0.1);color:#22d3ee;cursor:pointer;">⚡ Analyze &amp; Correlate</button>
+        </div>
+    </div>
+</div>
+
 <script>
-/* ── State ──────────────────────────────────────────────────── */
 let globalData = [];
 let activeCard = null;
 let cy = null;
 const tooltip = document.getElementById('cy-tooltip');
-
-/* ── Boot: parallel-load mock feed + custom intercepts ──────────── */
-const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.port !== ''))
-    ? 'http://127.0.0.1:8000'
-    : '';
+const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.port !== '')) ? 'http://127.0.0.1:8000' : '';
 
 function bootLoadFeeds() {
     Promise.all([
-        fetch(`${API_BASE}/api/v1/analyze`)
-            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
-        fetch(`${API_BASE}/api/v1/custom/feed`)
-            .then(r => r.ok ? r.json() : { results: [] })
-            .catch(() => ({ results: [] })),   // silently ignore if router not mounted yet
+        fetch(`${API_BASE}/api/v1/analyze`).then(r => r.json()),
+        fetch(`${API_BASE}/api/v1/custom/feed`).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] }))
     ]).then(([mockData, customData]) => {
-        // Custom intercepts always appear at the top
         globalData = [...(customData.results || []), ...(mockData.results || [])];
         document.getElementById('stats-count').textContent = globalData.length;
         document.getElementById('stats-badge').style.display = '';
         renderList(globalData);
-    }).catch(() => {
-        document.getElementById('targets').innerHTML =
-            `<div style="color:#ef4444;font-size:12px;text-align:center;padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;margin-top:12px;">
-                <p style="font-weight:600;margin-bottom:6px;">⚠ Backend API is not running</p>
-                <p style="color:#94a3b8;font-size:11px;line-height:1.5;">Start the server in your terminal:<br/>
-                <code style="color:#38bdf8;background:#0e1420;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px;">uvicorn main:app --reload</code></p>
-                <p style="color:#64748b;font-size:10px;margin-top:8px;">Then visit <a href="http://localhost:8000" target="_blank" style="color:#22d3ee;text-decoration:underline;">http://localhost:8000</a></p>
-            </div>`;
+    }).catch(err => {
+        document.getElementById('targets').innerHTML = `<div style="color:#ef4444;font-size:11px;text-align:center;padding:12px;">Failed to reach API server.</div>`;
     });
 }
-
 bootLoadFeeds();
 
-/* ── Helpers ────────────────────────────────────────────────── */
-function esc(str) {
-    const d = document.createElement('div');
-    d.appendChild(document.createTextNode(String(str)));
-    return d.innerHTML;
-}
+function esc(s) { const d = document.createElement('div'); d.appendChild(document.createTextNode(String(s))); return d.innerHTML; }
 function confColor(c) {
-    return c > 80 ? { fill: '#22c55e', glow: '#22c55e' }
-         : c > 40 ? { fill: '#eab308', glow: '#ca8a04' }
-         :          { fill: '#ef4444', glow: '#ef4444' };
+    return c > 80 ? { fill: '#22c55e', glow: '#22c55e' } : c > 40 ? { fill: '#eab308', glow: '#ca8a04' } : { fill: '#ef4444', glow: '#ef4444' };
 }
 
-/* ── Suspect list ───────────────────────────────────────────── */
+function handleSearchInput(e) {
+    const val = e.target.value.trim();
+    const badge = document.getElementById('queryBadge');
+    if (!val) {
+        badge.style.display = 'none';
+        renderList(globalData);
+        return;
+    }
+
+    let type = "ALIAS / KEYWORD";
+    let color = "#64748b";
+    if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "#3b82f6"; }
+    else if (val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) { type = "BTC WALLET"; color = "#eab308"; }
+    else if (val.startsWith('4') || val.startsWith('8')) { type = "MONERO (XMR)"; color = "#f97316"; }
+    else if (val.length === 76) { type = "TOX ID"; color = "#06b6d4"; }
+
+    badge.style.display = 'inline-block';
+    badge.style.background = `${color}22`;
+    badge.style.color = color;
+    badge.style.border = `1px solid ${color}55`;
+    badge.textContent = `Target Type: ${type}`;
+
+    const q = val.toLowerCase();
+    const filtered = globalData.flatMap(t => {
+        let aHit = false; let sHits = [];
+        if (q.length <= 2) {
+            aHit = t.darkweb_alias.toLowerCase().startsWith(q);
+            sHits = t.deanonymization_results.filter(s => s.suspect_name.toLowerCase().startsWith(q));
+        } else {
+            aHit = t.darkweb_alias.toLowerCase().includes(q);
+            sHits = t.deanonymization_results.filter(s => 
+                s.suspect_name.toLowerCase().includes(q) || s.evidence.some(ev => ev.toLowerCase().includes(q))
+            );
+        }
+        if (aHit || sHits.length > 0) return [{ ...t, deanonymization_results: aHit ? t.deanonymization_results : sHits }];
+        return [];
+    });
+    renderList(filtered);
+}
+
 function renderList(threats) {
     const wrap = document.getElementById('targets');
     wrap.innerHTML = '';
-
-    // Flatten and sort by confidence desc
     const rows = [];
     threats.forEach(t => t.deanonymization_results.forEach(s => rows.push({ t, s })));
     rows.sort((a, b) => b.s.confidence_score - a.s.confidence_score);
 
     if (rows.length === 0) {
-        wrap.innerHTML = '<div style="color:#334155;font-size:12px;text-align:center;margin-top:24px;">No results found.</div>';
+        wrap.innerHTML = '<div style="color:#334155;font-size:12px;text-align:center;margin-top:24px;">No matching indicators found.</div>';
         return;
     }
 
     rows.forEach(({ t, s }) => {
-        const c   = s.confidence_score;
+        const c = s.confidence_score;
         const col = confColor(c);
         const card = document.createElement('div');
         card.className = 'suspect-card';
         card.style.padding = '10px 11px';
-
-        // Badge only shown for user-submitted live intercepts
-        const customBadge = t.is_custom
-            ? `<span style="font-size:9px;font-weight:700;color:#22d3ee;letter-spacing:0.04em;
-                            border:1px solid rgba(34,211,238,0.4);padding:1px 5px;border-radius:3px;
-                            background:rgba(34,211,238,0.08);display:inline-block;margin-top:3px;">
-                   ● LIVE INTERCEPT</span>`
-            : '';
+        const customBadge = t.is_custom ? `<span style="font-size:9px;font-weight:700;color:#22d3ee;border:1px solid rgba(34,211,238,0.4);padding:1px 5px;border-radius:3px;background:rgba(34,211,238,0.08);display:inline-block;margin-top:3px;">● LIVE INTERCEPT</span>` : '';
 
         card.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div style="flex:1;min-width:0;padding-right:8px;">
-                    <p style="font-size:12px;font-weight:600;color:#67e8f9;
-                              white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.suspect_name)}</p>
-                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias:
-                        <span style="color:#f87171;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span>
-                    </p>
+                    <p style="font-size:12px;font-weight:600;color:#67e8f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.suspect_name)}</p>
+                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias: <span style="color:#f87171;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span></p>
                     ${customBadge}
                 </div>
-                <span style="font-size:10px;font-weight:700;color:${col.fill};
-                             border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;
-                             flex-shrink:0;background:${col.fill}0d;">${c}%</span>
+                <span style="font-size:10px;font-weight:700;color:${col.fill};border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;background:${col.fill}0d;">${c}%</span>
             </div>
             <div class="conf-bar">
                 <div class="conf-fill" style="width:${c}%;background:${col.fill};box-shadow:0 0 6px ${col.glow};"></div>
@@ -343,41 +539,68 @@ function renderList(threats) {
             card.classList.add('active');
             activeCard = card;
             renderGraph(t, s);
+            renderMatrix(s);
         };
         wrap.appendChild(card);
     });
 }
 
-/* ── Graph renderer — Obsidian-style hierarchy ──────────────── */
-function renderGraph(threat, suspect) {
-    const alias    = threat.darkweb_alias;
-    const realName = suspect.suspect_name;
+function renderMatrix(suspect) {
+    document.getElementById('matrixSuspectName').textContent = `${suspect.suspect_name} [${suspect.surface_platform}]`;
+    const b = suspect.breakdown || {};
 
+    const updateCard = (valId, barId, statusId, score, maxCap = 100) => {
+        const valElem = document.getElementById(valId);
+        const barElem = document.getElementById(barId);
+        const statElem = document.getElementById(statusId);
+        if (!valElem || !barElem || !statElem) return;
+
+        valElem.textContent = `${score}%`;
+        barElem.style.width = `${Math.min((score / maxCap) * 100, 100)}%`;
+
+        if (score >= 80) { statElem.textContent = "CONFIRMED"; statElem.style.color = "#22c55e"; } 
+        else if (score > 0) { statElem.textContent = "MATCHED"; statElem.style.color = "#38bdf8"; } 
+        else { statElem.textContent = "NO MATCH"; statElem.style.color = "#64748b"; }
+    };
+
+    updateCard('mCryptoVal', 'mCryptoBar', 'mCryptoStatus', b.crypto || 0);
+    updateCard('mEmailVal', 'mEmailBar', 'mEmailStatus', b.email || 0);
+    updateCard('mCommsVal', 'mCommsBar', 'mCommsStatus', b.comms || 0);
+    updateCard('mInfraVal', 'mInfraBar', 'mInfraStatus', b.infrastructure || 0);
+    updateCard('mStyloVal', 'mStyloBar', 'mStyloStatus', b.stylometry || 0, 30);
+    updateCard('mAliasVal', 'mAliasBar', 'mAliasStatus', b.alias || 0);
+    updateCard('mTtpVal', 'mTtpBar', 'mTtpStatus', b.ttps || 0);
+    updateCard('mTempVal', 'mTempBar', 'mTempStatus', b.temporal || 0);
+}
+
+function renderGraph(threat, suspect) {
+    const alias = threat.darkweb_alias;
+    const realName = suspect.suspect_name;
     const lbl = document.getElementById('activeTargetLabel');
-    lbl.textContent = `Analyzing: ${realName}`;
+    lbl.textContent = `Tracing: ${realName}`;
     lbl.style.display = '';
 
-    /* Build element list ─────────────────────────────────────── */
-    const els = [];
+    const els = [
+        { data: { id: 'N_IDENTITY', label: realName, nt: 'identity' } },
+        { data: { id: 'N_ALIAS', label: alias, nt: 'alias' } },
+        { data: { id: 'E_ALIAS_ID', source: 'N_IDENTITY', target: 'N_ALIAS', et: 'identifies' } }
+    ];
 
-    // Level 0 — ROOT: dark web alias
-    els.push({ data: { id: 'N_ALIAS', label: alias, nt: 'alias' } });
-
-    // Level 1 — IDENTITY: de-anonymized real person (direct link)
-    els.push({ data: { id: 'N_IDENTITY', label: realName, nt: 'identity' } });
-    els.push({ data: { id: 'E_ID', source: 'N_ALIAS', target: 'N_IDENTITY', et: 'identifies' } });
-
-    // Categorise evidence by type
     const CAT_DEFS = {
-        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ',  color: 'btc'   },
-        email: { id: 'N_CAT_EMAIL',  label: '✉ EMAIL',      prefix: 'Email Match: ',       color: 'email' },
-        stylo: { id: 'N_CAT_STYLO',  label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ',  color: 'stylo' },
+        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
+        email: { id: 'N_CAT_EMAIL', label: '✉ EMAIL', prefix: 'Email Match: ', color: 'email' },
+        comms: { id: 'N_CAT_COMMS', label: '💬 COMMS', prefix: 'Comms Match: ', color: 'comms' },
+        infra: { id: 'N_CAT_INFRA', label: '🌐 INFRASTRUCTURE', prefix: 'Infrastructure Match: ', color: 'infra' },
+        stylo: { id: 'N_CAT_STYLO', label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
     };
-    const buckets = { btc: [], email: [], stylo: [] };
+
+    const buckets = { btc: [], email: [], comms: [], infra: [], stylo: [] };
 
     suspect.evidence.forEach(ev => {
-        if      (ev.startsWith('Blockchain Match: ')) buckets.btc.push(ev);
-        else if (ev.startsWith('Email Match: '))      buckets.email.push(ev);
+        if (ev.startsWith('Blockchain Match: ')) buckets.btc.push(ev);
+        else if (ev.startsWith('Email Match: ')) buckets.email.push(ev);
+        else if (ev.startsWith('Comms Match: ')) buckets.comms.push(ev);
+        else if (ev.startsWith('Infrastructure Match: ')) buckets.infra.push(ev);
         else if (ev.startsWith('Stylometry Match: ')) buckets.stylo.push(ev);
     });
 
@@ -385,173 +608,122 @@ function renderGraph(threat, suspect) {
         if (items.length === 0) return;
         const cat = CAT_DEFS[key];
 
-        // Level 1 — Category group node
-        els.push({ data: { id: cat.id, label: cat.label, nt: 'cat', color: cat.color, count: items.length } });
-        els.push({ data: { source: 'N_ALIAS', target: cat.id, et: 'branch', color: cat.color } });
+        els.push({ data: { id: cat.id, label: cat.label, nt: 'cat', color: cat.color } });
+        els.push({ data: { source: 'N_IDENTITY', target: cat.id, et: 'branch', color: cat.color } });
 
-        // Level 2 — Individual indicator leaf nodes
         items.forEach((ev, i) => {
             const raw = ev.replace(cat.prefix, '');
-            const display = key === 'btc' ? raw.substring(0, 6) + '\u2026' + raw.slice(-5) : raw;
-            const nodeId  = `N_IND_${key}_${i}`;
+            const display = (key === 'btc') ? (raw.substring(0, 6) + '…' + raw.slice(-4)) : raw;
+            const nodeId = `N_IND_${key}_${i}`;
             els.push({ data: { id: nodeId, label: display, fullLabel: raw, nt: 'indicator', color: cat.color } });
             els.push({ data: { source: cat.id, target: nodeId, et: 'leaf', color: cat.color } });
         });
     });
 
-    /* Tear down previous instance ────────────────────────────── */
     if (cy) cy.destroy();
-    const container = document.getElementById('cy');
-    container.innerHTML = '';   // remove empty-state placeholder
-
-    /* Shared glow helper ─────────────────────────────────────── */
-    const GLOW = (color, blur = 22, opacity = 0.88) => ({
-        'shadow-blur': blur, 'shadow-color': color,
-        'shadow-offset-x': 0, 'shadow-offset-y': 0, 'shadow-opacity': opacity,
-    });
-    const LABEL = {
-        'label': 'data(label)',
-        'font-family': 'ui-monospace, SFMono-Regular, "Cascadia Mono", monospace',
-        'text-wrap': 'wrap', 'text-max-width': '96px',
-        'text-valign': 'bottom', 'text-halign': 'center',
-        'text-margin-y': 7,
-        'text-outline-color': '#080c14', 'text-outline-width': 3,
-        'color': '#94a3b8', 'font-weight': '600',
-    };
+    document.getElementById('cy').innerHTML = '';
 
     cy = cytoscape({
-        container,
+        container: document.getElementById('cy'),
         elements: els,
+        minZoom: 0.55,
+        maxZoom: 2.2,
+        wheelSensitivity: 0.25,
         style: [
-            /* Base node */
-            { selector: 'node', style: { ...LABEL, 'background-color': '#334155', 'border-width': 0, 'font-size': '10px' } },
+            {
+                selector: 'node',
+                style: {
+                    'label': 'data(label)',
+                    'color': '#94a3b8',
+                    'font-size': '10px',
+                    'text-valign': 'bottom',
+                    'text-margin-y': 6,
+                    'background-color': '#1e293b',
+                    'font-family': 'ui-monospace, monospace',
+                    'text-outline-color': '#070a12',
+                    'text-outline-width': 2
+                }
+            },
+            {
+                selector: 'node[nt="identity"]',
+                style: {
+                    'background-color': '#16a34a', 'width': 48, 'height': 48, 'color': '#86efac',
+                    'font-weight': 'bold', 'font-size': '11px', 'shadow-blur': 25,
+                    'shadow-color': '#22c55e', 'shadow-opacity': 0.8
+                }
+            },
+            {
+                selector: 'node[nt="alias"]',
+                style: {
+                    'background-color': '#dc2626', 'width': 42, 'height': 42, 'color': '#fca5a5',
+                    'font-weight': 'bold', 'shadow-blur': 20, 'shadow-color': '#ef4444', 'shadow-opacity': 0.7
+                }
+            },
+            {
+                selector: 'node[nt="cat"]',
+                style: { 'width': 32, 'height': 32, 'font-size': '9px', 'font-weight': 'bold' }
+            },
+            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#b45309', 'color': '#fde68a', 'shadow-blur': 16, 'shadow-color': '#eab308', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#1d4ed8', 'color': '#93c5fd', 'shadow-blur': 16, 'shadow-color': '#3b82f6', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="comms"]', style: { 'background-color': '#0e7490', 'color': '#67e8f9', 'shadow-blur': 16, 'shadow-color': '#06b6d4', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="infra"]', style: { 'background-color': '#047857', 'color': '#6ee7b7', 'shadow-blur': 16, 'shadow-color': '#10b981', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#6b21a8', 'color': '#d8b4fe', 'shadow-blur': 16, 'shadow-color': '#a855f7', 'shadow-opacity': 0.7 } },
 
-            /* Level 0 — Alias root (red glow, largest) */
-            { selector: 'node[nt="alias"]', style: {
-                'background-color': '#b91c1c', 'width': 56, 'height': 56,
-                'font-size': '11px', 'font-weight': '700', 'color': '#fca5a5',
-                ...GLOW('#ef4444', 38, 0.92),
-            }},
-
-            /* Level 1 — Identity (emerald glow) */
-            { selector: 'node[nt="identity"]', style: {
-                'background-color': '#166534', 'width': 46, 'height': 46,
-                'font-size': '10px', 'font-weight': '700', 'color': '#86efac',
-                ...GLOW('#22c55e', 28, 0.85),
-            }},
-
-            /* Level 1 — Category nodes */
-            { selector: 'node[nt="cat"]', style: { 'width': 36, 'height': 36, 'font-size': '9px', 'font-weight': '700', 'letter-spacing': '0.04em' } },
-            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#92400e', 'color': '#fde68a', ...GLOW('#d97706', 22, 0.8) } },
-            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#1e3a8a', 'color': '#93c5fd', ...GLOW('#3b82f6', 22, 0.8) } },
-            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#581c87', 'color': '#d8b4fe', ...GLOW('#a855f7', 22, 0.8) } },
-
-            /* Level 2 — Indicator leaf nodes (tiny) */
             { selector: 'node[nt="indicator"]', style: { 'width': 13, 'height': 13, 'font-size': '9px', 'font-weight': '500' } },
-            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#78350f', 'color': '#fde68a', ...GLOW('#ca8a04', 10, 0.65) } },
-            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#1e3a8a', 'color': '#bfdbfe', ...GLOW('#3b82f6', 10, 0.65) } },
-            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#4a1d96', 'color': '#e9d5ff', ...GLOW('#a855f7', 10, 0.65) } },
+            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#d97706', 'color': '#fef08a' } },
+            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#2563eb', 'color': '#bfdbfe' } },
+            { selector: 'node[nt="indicator"][color="comms"]', style: { 'background-color': '#0891b2', 'color': '#a5f3fc' } },
+            { selector: 'node[nt="indicator"][color="infra"]', style: { 'background-color': '#059669', 'color': '#a7f3d0' } },
+            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#7e22ce', 'color': '#e9d5ff' } },
 
-            /* Selected ring */
-            { selector: 'node:selected', style: { 'border-width': 2, 'border-color': '#ffffff', 'border-opacity': 0.5 } },
-
-            /* Base edge */
-            { selector: 'edge', style: { 'width': 1, 'line-color': '#1e293b', 'target-arrow-shape': 'none', 'curve-style': 'bezier', 'opacity': 0.5 } },
-
-            /* alias → identity  (dashed emerald with arrow) */
-            { selector: 'edge[et="identifies"]', style: {
-                'width': 1.8, 'line-color': '#22c55e',
-                'line-style': 'dashed', 'line-dash-pattern': [9, 5],
-                'target-arrow-shape': 'triangle', 'target-arrow-color': '#22c55e',
-                'opacity': 0.55,
-            }},
-
-            /* alias → category  (solid, colored) */
-            { selector: 'edge[et="branch"]', style: { 'width': 1.6, 'opacity': 0.45 } },
-            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#d97706' } },
+            { selector: 'edge', style: { 'width': 1.2, 'line-color': '#1e293b', 'curve-style': 'bezier', 'opacity': 0.6 } },
+            {
+                selector: 'edge[et="identifies"]',
+                style: { 'line-color': '#ef4444', 'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#ef4444', 'width': 2, 'opacity': 0.8 }
+            },
+            { selector: 'edge[et="branch"]', style: { 'width': 1.8, 'opacity': 0.75 } },
+            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#eab308' } },
             { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#3b82f6' } },
+            { selector: 'edge[et="branch"][color="comms"]', style: { 'line-color': '#06b6d4' } },
+            { selector: 'edge[et="branch"][color="infra"]', style: { 'line-color': '#10b981' } },
             { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#a855f7' } },
-
-            /* category → indicator  (faint dotted) */
-            { selector: 'edge[et="leaf"]', style: { 'width': 0.9, 'opacity': 0.22, 'line-style': 'dotted' } },
-            { selector: 'edge[et="leaf"][color="btc"]',   style: { 'line-color': '#d97706' } },
-            { selector: 'edge[et="leaf"][color="email"]', style: { 'line-color': '#3b82f6' } },
-            { selector: 'edge[et="leaf"][color="stylo"]', style: { 'line-color': '#a855f7' } },
+            { selector: 'edge[et="leaf"]', style: { 'width': 1.5, 'opacity': 0.45, 'line-style': 'dashed', 'line-color': '#64748b' } }
         ],
-
         layout: {
-            name: 'breadthfirst',
-            roots: ['#N_ALIAS'],          // anchor tree at the alias
-            directed: false,
-            padding: 65,
-            spacingFactor: 1.9,
-            avoidOverlap: true,
-            nodeDimensionsIncludeLabels: true,
-            animate: true,
-            animationDuration: 520,
-            animationEasing: 'ease-out-expo',
+            name: 'cose', animate: true, animationDuration: 700, fit: true, padding: 50, randomize: false, componentSpacing: 100,
+            nodeRepulsion: function() { return 450000; }, nodeOverlap: 20,
+            idealEdgeLength: function(edge) {
+                if (edge.data('et') === 'identifies') return 100;
+                if (edge.data('et') === 'branch') return 80;
+                return 45;
+            },
+            edgeElasticity: function() { return 100; }, nestingFactor: 5, gravity: 80, numIter: 1000, initialTemp: 200, coolingFactor: 0.95, minTemp: 1.0
         }
     });
 
-    /* Tooltip: hover shows full untruncated value ─────────────── */
     cy.on('mouseover', 'node', e => {
         tooltip.textContent = e.target.data('fullLabel') || e.target.data('label');
         tooltip.style.display = 'block';
     });
     cy.on('mousemove', 'node', e => {
         tooltip.style.left = (e.originalEvent.clientX + 14) + 'px';
-        tooltip.style.top  = (e.originalEvent.clientY - 10) + 'px';
+        tooltip.style.top = (e.originalEvent.clientY - 10) + 'px';
     });
     cy.on('mouseout', 'node', () => { tooltip.style.display = 'none'; });
-
-    /* Click to highlight closed neighbourhood ─────────────────── */
-    cy.on('tap', 'node', e => {
-        const n = e.target;
-        cy.elements().not(n.closedNeighborhood()).style({ opacity: 0.15 });
-        n.closedNeighborhood().style({ opacity: 1 });
-    });
-    cy.on('tap', e => {
-        if (e.target === cy) cy.elements().style({ opacity: 1 });
-    });
 }
 
-/* ── Search ─────────────────────────────────────────────────── */
-document.getElementById('searchInput').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase().trim();
-    if (!q) { renderList(globalData); return; }
-    const filtered = globalData.flatMap(t => {
-        const aHit = t.darkweb_alias.toLowerCase().includes(q);
-        const sHits = t.deanonymization_results.filter(s => s.suspect_name.toLowerCase().includes(q));
-        if (aHit || sHits.length > 0)
-            return [{ ...t, deanonymization_results: aHit ? t.deanonymization_results : sHits }];
-        return [];
-    });
-    renderList(filtered);
-});
-
-/* ── Live Intercept Modal ────────────────────────────────────── */
 const PRESETS = {
-    conti: {
-        author: 'shadow_broker_99',
-        content: 'Need a FUD crypter. AV bypass must be 100%. Escrow accepted. Contact bentley_crypter@protonmail.com. Payment to 1BentJeyCryptABC123DEF456GH789JK. Jabber preferred for opsec.'
-    },
-    lockbit: {
-        author: 'anon_affiliate_01',
-        content: 'LockBit affiliate program recruiting. Bug bounty rewards active. Contact supp_admin@lockbit.io for negotiations. Payouts processed via 1LockBitSuppAddress99281746283748.'
-    },
-    clean: {
-        author: 'random_user_404',
-        content: 'Looking for someone to help with general network config. DM me on Telegram @netconfig99 for pricing. Cash only, no crypto.'
-    }
+    conti: { author: 'shadow_broker_99', content: 'Need a FUD crypter. AV bypass must be 100%. Escrow accepted. Contact bentley_crypter@protonmail.com. Payment to 1BentJeyCryptABC123DEF456GH789JK.' },
+    lockbit: { author: 'anon_affiliate_01', content: 'LockBit affiliate program recruiting. Bug bounty rewards active. Contact supp_admin@lockbit.io. Payouts via 1LockBitSuppAddress99281746283748.' },
+    clean: { author: 'random_user_404', content: 'Looking for someone to help with general network config. DM me on Telegram @netconfig99.' }
 };
 
 function openInterceptModal() {
     document.getElementById('interceptModal').style.display = 'flex';
-    document.getElementById('interceptAlias').value   = '';
+    document.getElementById('interceptAlias').value = '';
     document.getElementById('interceptContent').value = '';
     document.getElementById('interceptError').style.display = 'none';
-    // Reset file upload state
-    document.getElementById('fileInput').value        = '';
+    document.getElementById('fileInput').value = '';
     document.getElementById('fileInfoBadge').style.display = 'none';
     setTimeout(() => document.getElementById('interceptContent').focus(), 60);
 }
@@ -563,29 +735,57 @@ function closeInterceptModal() {
 function loadPreset(key) {
     const p = PRESETS[key];
     if (!p) return;
-    document.getElementById('interceptAlias').value   = p.author;
+    document.getElementById('interceptAlias').value = p.author;
     document.getElementById('interceptContent').value = p.content;
-    document.getElementById('interceptError').style.display = 'none';
 }
 
-function showToast(msg, durationMs = 3200) {
-    const t = document.createElement('div');
-    t.className = 'intercept-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), durationMs);
+function showToast(msg) {
+    const t = document.createElement('div'); t.className = 'intercept-toast'; t.textContent = msg;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
 }
+
+function handleFileSelect(e) {
+    const file = (e.target && e.target.files && e.target.files[0])
+               || (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        const text = ev.target.result || '';
+        document.getElementById('interceptContent').value = text;
+        const aliasInput = document.getElementById('interceptAlias');
+        if (!aliasInput.value.trim()) {
+            aliasInput.value = file.name.replace(/\.[^/.]+$/, '');
+        }
+        const kb = (file.size / 1024).toFixed(1);
+        document.getElementById('fileNameDisplay').textContent =
+            `✓  ${file.name}  (${kb} KB — ${text.split('\n').length} lines)`;
+        document.getElementById('fileInfoBadge').style.display = 'block';
+    };
+    reader.onerror = function () {
+        const errDiv = document.getElementById('interceptError');
+        errDiv.textContent = 'Could not read file. Try a different file or paste manually.';
+        errDiv.style.display = 'block';
+    };
+    reader.readAsText(file);
+}
+
+(function () {
+    const zone = document.getElementById('dropZone');
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFileSelect(e); });
+})();
 
 async function submitIntercept() {
-    const alias   = document.getElementById('interceptAlias').value.trim();
+    const alias = document.getElementById('interceptAlias').value.trim();
     const content = document.getElementById('interceptContent').value.trim();
-    const errDiv  = document.getElementById('interceptError');
-    const btn     = document.getElementById('interceptSubmitBtn');
-
-    errDiv.style.display = 'none';
+    const errDiv = document.getElementById('interceptError');
+    const btn = document.getElementById('interceptSubmitBtn');
 
     if (content.length < 5) {
-        errDiv.textContent = 'Please enter at least 5 characters of intercepted text.';
+        errDiv.textContent = 'Please enter at least 5 characters.';
         errDiv.style.display = 'block';
         return;
     }
@@ -595,37 +795,21 @@ async function submitIntercept() {
 
     try {
         const res = await fetch(`${API_BASE}/api/v1/custom/analyze`, {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ author: alias || 'UNKNOWN_ACTOR', content })
+            body: JSON.stringify({ author: alias || 'UNKNOWN_ACTOR', content })
         });
-
-        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { result } = await res.json();
-
         closeInterceptModal();
 
-        // Merge new intercept at the very front of the dataset
         globalData.unshift(result);
         document.getElementById('stats-count').textContent = globalData.length;
-
-        // Re-render sidebar with the new entry on top
         renderList(globalData);
 
-        if (result.deanonymization_results && result.deanonymization_results.length > 0) {
-            // Auto-click the first card (our new intercept's top match)
-            const firstCard = document.getElementById('targets').querySelector('.suspect-card');
-            if (firstCard) {
-                firstCard.click();
-                firstCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            showToast(`⚡ Intercept analyzed — ${result.deanonymization_results.length} suspect(s) matched`);
-        } else {
-            // IOCs extracted but no known suspects matched
-            const iocCount = Object.values(result.extracted_indicators).flat().length;
-            showToast(`⚠ No known suspects matched. ${iocCount} IOC(s) extracted.`);
-        }
-
+        const firstCard = document.getElementById('targets').querySelector('.suspect-card');
+        if (firstCard) firstCard.click();
+        showToast('⚡ Live Intercept Correlated Successfully');
     } catch (err) {
         errDiv.textContent = `Analysis failed: ${err.message}`;
         errDiv.style.display = 'block';
@@ -634,161 +818,6 @@ async function submitIntercept() {
         btn.disabled = false;
     }
 }
-
-// Close modal on backdrop click or Escape key
-document.getElementById('interceptModal').addEventListener('click', e => {
-    if (e.target === document.getElementById('interceptModal')) closeInterceptModal();
-});
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeInterceptModal();
-});
-
-/* ── File Upload: read file client-side, populate textarea ──────── */
-function handleFileSelect(e) {
-    const file = (e.target && e.target.files && e.target.files[0])
-               || (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (ev) {
-        const text = ev.target.result || '';
-
-        // Populate the textarea so the investigator can review before submitting
-        document.getElementById('interceptContent').value = text;
-
-        // Auto-fill alias with filename stem only if field is currently empty
-        const aliasInput = document.getElementById('interceptAlias');
-        if (!aliasInput.value.trim()) {
-            aliasInput.value = file.name.replace(/\.[^/.]+$/, '');
-        }
-
-        // Show green confirmation badge inside the drop zone
-        const kb = (file.size / 1024).toFixed(1);
-        document.getElementById('fileNameDisplay').textContent =
-            `✓  ${file.name}  (${kb} KB — ${text.split('\n').length} lines)`;
-        document.getElementById('fileInfoBadge').style.display = 'block';
-    };
-    reader.onerror = function () {
-        const errDiv = document.getElementById('interceptError');
-        errDiv.textContent = 'Could not read the file. Try a different file or paste the text manually.';
-        errDiv.style.display = 'block';
-    };
-    reader.readAsText(file);
-}
-
-// Drag-and-drop events on the drop zone
-(function () {
-    const zone = document.getElementById('dropZone');
-    zone.addEventListener('dragover', e => {
-        e.preventDefault();
-        zone.classList.add('drag-over');
-    });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
-        handleFileSelect(e);
-    });
-})();
 </script>
-
-<!-- ── Live Intercept Modal ────────────────────────────────────── -->
-<div id="interceptModal" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-
-        <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
-            <div>
-                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">⚡ Live Intercept Analysis</h2>
-                <p style="font-size:11px;color:#475569;margin-top:3px;">
-                    Paste any raw dark web post, chat log, or ransom note to de-anonymize it in real time.
-                </p>
-            </div>
-            <button onclick="closeInterceptModal()"
-                    style="background:none;border:none;color:#475569;font-size:20px;line-height:1;
-                           cursor:pointer;padding:0 0 0 16px;transition:color 0.15s;"
-                    onmouseover="this.style.color='#94a3b8'"
-                    onmouseout="this.style.color='#475569'">✕</button>
-        </div>
-
-        <!-- Alias -->
-        <div style="margin-bottom:12px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;
-                          letter-spacing:0.06em;display:block;margin-bottom:5px;">
-                Actor Alias / Source Handle
-            </label>
-            <input id="interceptAlias" type="text" placeholder="e.g. shadow_broker_99  (optional)"
-                   style="width:100%;padding:8px 10px;background:#080c14;border:1px solid #1e293b;
-                          border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;
-                          font-family:ui-monospace,monospace;transition:border-color 0.15s;"
-                   onfocus="this.style.borderColor='rgba(34,211,238,0.4)'"
-                   onblur="this.style.borderColor='#1e293b'">
-        </div>
-
-        <!-- File upload drop zone -->
-        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <input type="file" id="fileInput" style="display:none;"
-                   accept=".txt,.log,.json,.eml,.csv,.md"
-                   onchange="handleFileSelect(event)">
-            <p style="font-size:11px;color:#94a3b8;">
-                📁 <span style="color:#22d3ee;font-weight:600;">Click to upload</span> or drag &amp; drop a file
-            </p>
-            <p style="font-size:9px;color:#475569;margin-top:2px;">.txt · .log · .json · .eml · .csv · .md</p>
-            <div id="fileInfoBadge" style="display:none;margin-top:7px;">
-                <span id="fileNameDisplay"
-                      style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.08);
-                             border:1px solid rgba(34,197,94,0.3);padding:2px 9px;border-radius:4px;"></span>
-            </div>
-        </div>
-
-        <!-- Raw text (also populated by file upload) -->
-        <div style="margin-bottom:14px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;
-                          letter-spacing:0.06em;display:block;margin-bottom:5px;">
-                Raw Intercepted Text <span style="color:#ef4444;">*</span>
-                <span style="color:#334155;font-weight:400;text-transform:none;letter-spacing:0;">— or paste directly below</span>
-            </label>
-            <textarea id="interceptContent" class="intercept-textarea"
-                      placeholder="Paste forum post, Telegram log, ransom note, or any unstructured text here…"></textarea>
-        </div>
-
-        <!-- Quick presets -->
-        <div style="margin-bottom:18px;">
-            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;
-                      text-transform:uppercase;letter-spacing:0.06em;">Quick Demo Presets</p>
-            <div style="display:flex;gap:7px;flex-wrap:wrap;">
-                <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
-                <button class="preset-btn" onclick="loadPreset('lockbit')">🔒 LockBit Affiliate</button>
-                <button class="preset-btn" onclick="loadPreset('clean')">✅ Zero-Match Post</button>
-            </div>
-        </div>
-
-        <!-- Error -->
-        <div id="interceptError"
-             style="display:none;color:#ef4444;font-size:11px;margin-bottom:10px;
-                    padding:8px 10px;background:rgba(239,68,68,0.08);
-                    border:1px solid rgba(239,68,68,0.2);border-radius:5px;"></div>
-
-        <!-- Action buttons -->
-        <div style="display:flex;justify-content:flex-end;gap:10px;">
-            <button onclick="closeInterceptModal()"
-                    style="font-size:12px;padding:7px 16px;border-radius:5px;border:1px solid #1e293b;
-                           background:transparent;color:#475569;cursor:pointer;transition:color 0.15s;"
-                    onmouseover="this.style.color='#94a3b8'"
-                    onmouseout="this.style.color='#475569'">Cancel</button>
-            <button id="interceptSubmitBtn" onclick="submitIntercept()"
-                    style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;
-                           border:1px solid rgba(34,211,238,0.4);background:rgba(34,211,238,0.1);
-                           color:#22d3ee;cursor:pointer;transition:background 0.15s,box-shadow 0.15s;
-                           box-shadow:0 0 12px rgba(34,211,238,0.15);"
-                    onmouseover="this.style.background='rgba(34,211,238,0.2)'"
-                    onmouseout="this.style.background='rgba(34,211,238,0.1)'">
-                ⚡ Analyze &amp; Correlate
-            </button>
-        </div>
-
-    </div>
-</div>
-
 </body>
 </html>
