@@ -17,7 +17,7 @@ import json
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel, Field
 
 from extractor import ThreatExtractor
@@ -131,3 +131,49 @@ def clear_custom_feed():
     if os.path.exists(STORAGE_FILE):
         os.remove(STORAGE_FILE)
     return {"status": "success", "message": "Custom intercept feed cleared."}
+
+
+@router.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    author: Optional[str] = Form(None),
+):
+    """
+    Accept a raw file upload (.txt, .log, .json, .eml, .csv) and run the same
+    de-anonymization pipeline as /analyze.
+
+    The pipeline is identical to POST /analyze — only the text ingestion method
+    differs (file bytes → utf-8 decode instead of JSON body field).
+
+    Used by the browser's drag-and-drop zone via a multipart/form-data POST.
+    Can also be called directly via curl:
+        curl -F "file=@leak.log" -F "author=hydra99" http://localhost:8000/api/v1/custom/upload
+    """
+    ALLOWED_EXTENSIONS = {".txt", ".log", ".json", ".eml", ".csv", ".md"}
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext and ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type '{ext}'. Accepted: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+
+    raw_bytes = await file.read()
+    if not raw_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    # Decode tolerantly — ignore unrecognised bytes (e.g. Windows-1252 artifacts)
+    content = raw_bytes.decode("utf-8", errors="ignore").strip()
+
+    if len(content) < 5:
+        raise HTTPException(status_code=400, detail="File contains too little readable text (< 5 chars).")
+
+    # Default alias to filename stem if not provided
+    stem = os.path.splitext(file.filename or "UNKNOWN")[0]
+    author_alias = (author or stem or "UNKNOWN_ACTOR").strip() or "UNKNOWN_ACTOR"
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    # Delegate to the same shared helpers — identical pipeline as /analyze
+    report = _analyze(author_alias, content, timestamp)
+    _save_post(author_alias, content, timestamp)
+
+    return {"status": "success", "result": report}
