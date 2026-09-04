@@ -1,10 +1,19 @@
 import json
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from extractor import ThreatExtractor
 from correlator import CorrelationEngine
 
 app = FastAPI(title="Dark Web Threat Actor De-Anonymization API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 extractor = ThreatExtractor()
 
 # Load OSINT database once at startup

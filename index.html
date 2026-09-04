@@ -2,185 +2,454 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Threat Intel Dashboard</title>
+    <title>SIH Threat Intel Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        #cy { width: 100%; height: 500px; background-color: #1e293b; border-radius: 8px; }
-        .target-card { cursor: pointer; transition: all 0.2s; }
-        .target-card:hover { transform: translateY(-2px); border-color: #22d3ee; }
-        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; }
+        /* ── Base ─────────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #080c14;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Graph canvas – Obsidian void aesthetic ───────────────── */
+        #cy {
+            width: 100%;
+            height: 100%;
+            background-color: #080c14;
+            background-image:
+                radial-gradient(ellipse 60% 50% at 50% 50%,
+                    rgba(34, 211, 238, 0.025) 0%,
+                    transparent 70%);
+        }
+
+        /* ── Suspect cards ────────────────────────────────────────── */
+        .suspect-card {
+            cursor: pointer;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
+            border: 1px solid #1e293b;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 6px;
+        }
+        .suspect-card:hover {
+            border-color: rgba(34, 211, 238, 0.35);
+            box-shadow: 0 0 14px rgba(34, 211, 238, 0.12);
+            transform: translateY(-1px);
+        }
+        .suspect-card.active {
+            border-color: #22d3ee;
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.22);
+        }
+
+        /* ── Confidence bar ───────────────────────────────────────── */
+        .conf-bar  { height: 2px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 7px; }
+        .conf-fill { height: 100%; border-radius: 2px; }
+
+        /* ── Legend dots ──────────────────────────────────────────── */
+        .ldot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+        /* ── Scrollbar ────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+
+        /* ── Empty graph placeholder ──────────────────────────────── */
+        .empty-graph {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100%; gap: 14px;
+            color: #1e293b; font-size: 13px;
+            user-select: none;
+        }
+
+        /* ── Floating tooltip ─────────────────────────────────────── */
+        #cy-tooltip {
+            position: fixed;
+            padding: 5px 10px;
+            background: #0e1420;
+            border: 1px solid #334155;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: ui-monospace, monospace;
+            color: #94a3b8;
+            pointer-events: none;
+            display: none;
+            z-index: 9999;
+            max-width: 260px;
+            word-break: break-all;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
-<body class="p-8">
-    <h1 class="text-3xl font-bold mb-6 text-cyan-400">SIH De-Anonymization Dashboard</h1>
-    
-    <div class="grid grid-cols-3 gap-6 mb-8">
-        <div class="flex flex-col h-[500px]">
-            <h2 class="text-xl font-semibold mb-4">Suspect Profiles</h2>
-            <input type="text" id="searchInput" placeholder="Search aliases or names..." 
-                   class="w-full p-2 mb-4 bg-slate-800 border border-slate-600 rounded text-white focus:outline-none focus:border-cyan-400">
-            <div id="targets" class="space-y-4 overflow-y-auto pr-2 pb-4 flex-grow"></div>
+<body>
+
+<!-- Floating tooltip -->
+<div id="cy-tooltip"></div>
+
+<!-- ── Top bar ────────────────────────────────────────────────── -->
+<header style="padding:14px 24px;border-bottom:1px solid #0f172a;background:#080c14;
+               display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+    <div>
+        <h1 style="font-size:18px;font-weight:700;color:#22d3ee;letter-spacing:-0.3px;">
+            ⬡ De-Anonymization Dashboard
+        </h1>
+        <p style="font-size:11px;color:#475569;margin-top:2px;">SIH · Dark Web Threat Intelligence Platform</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e;"></div>
+            <span style="font-size:11px;color:#475569;">API Online</span>
         </div>
-        
-        <div class="col-span-2 p-6 bg-slate-800 rounded-lg h-[500px]">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">Entity Relationship Graph</h2>
-                <span id="activeTargetLabel" class="text-sm font-bold text-cyan-400 hidden"></span>
-            </div>
-            <div id="cy">
-                <div class="empty-state text-lg">Select a suspect profile to generate the relationship graph.</div>
-            </div>
+        <div id="stats-badge" style="display:none;font-size:11px;color:#475569;
+             padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
+            <span id="stats-count">0</span> actors analyzed
         </div>
     </div>
+</header>
 
-    <script>
-        let globalIntelligenceData = [];
+<!-- ── Main layout ────────────────────────────────────────────── -->
+<main style="display:flex;flex:1;overflow:hidden;">
 
-        fetch('/api/v1/analyze')
-            .then(res => res.json())
-            .then(data => {
-                globalIntelligenceData = data.results;
-                // Render an empty list on initial load
-                renderTargetList([]); 
-            });
+    <!-- Left: suspect list -->
+    <aside style="width:290px;min-width:290px;display:flex;flex-direction:column;
+                  border-right:1px solid #0f172a;padding:14px 12px;gap:10px;background:#080c14;">
+        <input id="searchInput" type="text" placeholder="Search aliases or names…"
+               style="width:100%;padding:8px 10px;background:#0d1424;border:1px solid #1e293b;
+                      border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;transition:border-color 0.15s;"
+               onfocus="this.style.borderColor='rgba(34,211,238,0.4)'"
+               onblur="this.style.borderColor='#1e293b'">
+        <div id="targets" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-right:2px;"></div>
+    </aside>
 
-        function renderTargetList(threats) {
-            const targetsDiv = document.getElementById('targets');
-            targetsDiv.innerHTML = '';
+    <!-- Right: graph panel -->
+    <section style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
 
-            // Display a prompt if the search is empty
-            if (threats.length === 0) {
-                targetsDiv.innerHTML = '<div class="text-slate-500 italic text-center mt-10">Awaiting query. Enter an alias or name to scan the OSINT database...</div>';
-                return;
-            }
+        <!-- Graph header with legend -->
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:10px 16px;border-bottom:1px solid #0f172a;background:#0b1020;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:12px;font-weight:600;color:#94a3b8;">Entity Relationship Graph</span>
+                <span id="activeTargetLabel"
+                      style="display:none;font-size:10px;padding:2px 8px;
+                             background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);
+                             border-radius:20px;color:#22d3ee;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#475569;">
+                <span style="display:flex;align-items:center;gap:5px;">
+                    <span class="ldot" style="background:#ef4444;box-shadow:0 0 5px #ef4444;"></span> Alias
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;">
+                    <span class="ldot" style="background:#22c55e;box-shadow:0 0 5px #22c55e;"></span> Identity
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;">
+                    <span class="ldot" style="background:#eab308;box-shadow:0 0 5px #eab308;"></span> Blockchain
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;">
+                    <span class="ldot" style="background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></span> Email
+                </span>
+                <span style="display:flex;align-items:center;gap:5px;">
+                    <span class="ldot" style="background:#a855f7;box-shadow:0 0 5px #a855f7;"></span> Stylometry
+                </span>
+                <span style="color:#334155;font-size:9px;">· click node to highlight neighbours</span>
+            </div>
+        </div>
 
-            threats.forEach((threat) => {
-                threat.deanonymization_results.forEach(suspect => {
-                    const realName = suspect.suspect_name;
-                    const confidence = suspect.confidence_score;
-                    const color = confidence > 80 ? 'green' : (confidence > 40 ? 'yellow' : 'red');
+        <!-- Cytoscape container -->
+        <div id="cy">
+            <div class="empty-graph">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.2">
+                    <circle cx="12" cy="12" r="3.2"/>
+                    <circle cx="3.5" cy="6" r="2"/><circle cx="20.5" cy="6" r="2"/>
+                    <circle cx="3.5" cy="18" r="2"/><circle cx="20.5" cy="18" r="2"/>
+                    <line x1="11" y1="9.5" x2="5" y2="7"/><line x1="13" y1="9.5" x2="19" y2="7"/>
+                    <line x1="11" y1="14.5" x2="5" y2="17"/><line x1="13" y1="14.5" x2="19" y2="17"/>
+                </svg>
+                <span>Select a suspect profile to render the relationship graph</span>
+            </div>
+        </div>
+    </section>
+</main>
 
-                    const card = document.createElement('div');
-                    card.className = `target-card p-4 bg-slate-900 rounded border border-slate-700`;
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-cyan-300 font-bold text-lg">${realName}</p>
-                                <p class="text-sm text-slate-400">Alias: <span class="text-red-400">${threat.darkweb_alias}</span></p>
-                            </div>
-                            <span class="px-2 py-1 bg-slate-800 rounded text-xs font-bold text-${color}-400 border border-${color}-400/30">
-                                ${confidence}% Match
-                            </span>
-                        </div>
-                    `;
-                    
-                    card.onclick = () => renderGraph(threat, suspect);
-                    targetsDiv.appendChild(card);
-                });
-            });
-        }
+<script>
+/* ── State ──────────────────────────────────────────────────── */
+let globalData = [];
+let activeCard = null;
+let cy = null;
+const tooltip = document.getElementById('cy-tooltip');
 
-        function renderGraph(threat, suspect) {
-            const alias = threat.darkweb_alias;
-            const realName = suspect.suspect_name;
-            const elements = [];
+/* ── Boot: fetch analysis ───────────────────────────────────── */
+const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.port !== ''))
+    ? 'http://127.0.0.1:8000'
+    : '';
 
-            const label = document.getElementById('activeTargetLabel');
-            label.textContent = `Analyzing: ${realName}`;
-            label.classList.remove('hidden');
+fetch(`${API_BASE}/api/v1/analyze`)
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
+    .then(data => {
+        globalData = data.results;
+        document.getElementById('stats-count').textContent = data.threat_actors_analyzed;
+        document.getElementById('stats-badge').style.display = '';
+        renderList(globalData);
+    })
+    .catch(err => {
+        document.getElementById('targets').innerHTML =
+            `<div style="color:#ef4444;font-size:12px;text-align:center;padding:16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;margin-top:12px;">
+                <p style="font-weight:600;margin-bottom:6px;">⚠ Backend API is not running</p>
+                <p style="color:#94a3b8;font-size:11px;line-height:1.5;">Start the server in your terminal:<br/>
+                <code style="color:#38bdf8;background:#0e1420;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px;">uvicorn main:app --reload</code></p>
+                <p style="color:#64748b;font-size:10px;margin-top:8px;">Then visit <a href="http://localhost:8000" target="_blank" style="color:#22d3ee;text-decoration:underline;">http://localhost:8000</a></p>
+            </div>`;
+    });
 
-            elements.push({ data: { id: alias, label: alias, color: '#ef4444' } });
-            elements.push({ data: { id: realName, label: realName, color: '#22c55e' } });
+/* ── Helpers ────────────────────────────────────────────────── */
+function esc(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(String(str)));
+    return d.innerHTML;
+}
+function confColor(c) {
+    return c > 80 ? { fill: '#22c55e', glow: '#22c55e' }
+         : c > 40 ? { fill: '#eab308', glow: '#ca8a04' }
+         :          { fill: '#ef4444', glow: '#ef4444' };
+}
 
-            suspect.evidence.forEach(ev => {
-                const exactMatch = ev.split(': ')[1];
-                let nodeColor = '#3b82f6';
-                let displayLabel = exactMatch;
+/* ── Suspect list ───────────────────────────────────────────── */
+function renderList(threats) {
+    const wrap = document.getElementById('targets');
+    wrap.innerHTML = '';
 
-                if (ev.includes('Blockchain')) {
-                    nodeColor = '#eab308';
-                    displayLabel = exactMatch.substring(0, 8) + '...' + exactMatch.slice(-6);
-                } else if (ev.includes('Stylometry')) {
-                    nodeColor = '#a855f7';
-                }
-                
-                elements.push({ data: { id: exactMatch, label: displayLabel, color: nodeColor } });
-                elements.push({ data: { source: alias, target: exactMatch } });
-                elements.push({ data: { source: exactMatch, target: realName } });
-            });
+    // Flatten and sort by confidence desc
+    const rows = [];
+    threats.forEach(t => t.deanonymization_results.forEach(s => rows.push({ t, s })));
+    rows.sort((a, b) => b.s.confidence_score - a.s.confidence_score);
 
-            cytoscape({
-                container: document.getElementById('cy'),
-                elements: elements,
-                style: [
-                    { 
-                        selector: 'node', 
-                        style: { 
-                            'background-color': 'data(color)', 
-                            'label': 'data(label)', 
-                            'color': '#f8fafc',
-                            'font-size': '11px',
-                            'font-weight': 'bold',
-                            'text-valign': 'bottom',
-                            'text-margin-y': 6,
-                            'text-wrap': 'wrap',
-                            'text-max-width': '100px',
-                            'text-outline-color': '#0f172a', 
-                            'text-outline-width': 3,
-                            'width': 26,
-                            'height': 26
-                        } 
-                    },
-                    { 
-                        selector: 'edge', 
-                        style: { 
-                            'width': 2, 
-                            'line-color': '#64748b', 
-                            'target-arrow-shape': 'triangle', 
-                            'target-arrow-color': '#64748b', 
-                            'curve-style': 'bezier' 
-                        } 
-                    }
-                ],
-                layout: { 
-                    name: 'cose', 
-                    padding: 60,
-                    animate: true,
-                    nodeRepulsion: 800000,
-                    idealEdgeLength: 130,
-                    edgeElasticity: 100
-                }
-            });
-        }
+    if (rows.length === 0) {
+        wrap.innerHTML = '<div style="color:#334155;font-size:12px;text-align:center;margin-top:24px;">No results found.</div>';
+        return;
+    }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            
-            // If the search bar is cleared, revert to the empty state
-            if (query === '') {
-                renderTargetList([]);
-                return;
-            }
-            
-            const filteredData = globalIntelligenceData.map(threat => {
-                const matchesAlias = threat.darkweb_alias.toLowerCase().includes(query);
-                const matchingSuspects = threat.deanonymization_results.filter(s => 
-                    s.suspect_name.toLowerCase().includes(query)
-                );
+    rows.forEach(({ t, s }) => {
+        const c   = s.confidence_score;
+        const col = confColor(c);
+        const card = document.createElement('div');
+        card.className = 'suspect-card';
+        card.style.padding = '10px 11px';
+        card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;min-width:0;padding-right:8px;">
+                    <p style="font-size:12px;font-weight:600;color:#67e8f9;
+                              white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.suspect_name)}</p>
+                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias:
+                        <span style="color:#f87171;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span>
+                    </p>
+                </div>
+                <span style="font-size:10px;font-weight:700;color:${col.fill};
+                             border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;
+                             flex-shrink:0;background:${col.fill}0d;">${c}%</span>
+            </div>
+            <div class="conf-bar">
+                <div class="conf-fill" style="width:${c}%;background:${col.fill};box-shadow:0 0 6px ${col.glow};"></div>
+            </div>
+        `;
+        card.onclick = () => {
+            if (activeCard) activeCard.classList.remove('active');
+            card.classList.add('active');
+            activeCard = card;
+            renderGraph(t, s);
+        };
+        wrap.appendChild(card);
+    });
+}
 
-                if (matchesAlias || matchingSuspects.length > 0) {
-                    return {
-                        ...threat,
-                        deanonymization_results: matchesAlias ? threat.deanonymization_results : matchingSuspects
-                    };
-                }
-                return null;
-            }).filter(Boolean);
+/* ── Graph renderer — Obsidian-style hierarchy ──────────────── */
+function renderGraph(threat, suspect) {
+    const alias    = threat.darkweb_alias;
+    const realName = suspect.suspect_name;
 
-            renderTargetList(filteredData);
+    const lbl = document.getElementById('activeTargetLabel');
+    lbl.textContent = `Analyzing: ${realName}`;
+    lbl.style.display = '';
+
+    /* Build element list ─────────────────────────────────────── */
+    const els = [];
+
+    // Level 0 — ROOT: dark web alias
+    els.push({ data: { id: 'N_ALIAS', label: alias, nt: 'alias' } });
+
+    // Level 1 — IDENTITY: de-anonymized real person (direct link)
+    els.push({ data: { id: 'N_IDENTITY', label: realName, nt: 'identity' } });
+    els.push({ data: { id: 'E_ID', source: 'N_ALIAS', target: 'N_IDENTITY', et: 'identifies' } });
+
+    // Categorise evidence by type
+    const CAT_DEFS = {
+        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ',  color: 'btc'   },
+        email: { id: 'N_CAT_EMAIL',  label: '✉ EMAIL',      prefix: 'Email Match: ',       color: 'email' },
+        stylo: { id: 'N_CAT_STYLO',  label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ',  color: 'stylo' },
+    };
+    const buckets = { btc: [], email: [], stylo: [] };
+
+    suspect.evidence.forEach(ev => {
+        if      (ev.startsWith('Blockchain Match: ')) buckets.btc.push(ev);
+        else if (ev.startsWith('Email Match: '))      buckets.email.push(ev);
+        else if (ev.startsWith('Stylometry Match: ')) buckets.stylo.push(ev);
+    });
+
+    Object.entries(buckets).forEach(([key, items]) => {
+        if (items.length === 0) return;
+        const cat = CAT_DEFS[key];
+
+        // Level 1 — Category group node
+        els.push({ data: { id: cat.id, label: cat.label, nt: 'cat', color: cat.color, count: items.length } });
+        els.push({ data: { source: 'N_ALIAS', target: cat.id, et: 'branch', color: cat.color } });
+
+        // Level 2 — Individual indicator leaf nodes
+        items.forEach((ev, i) => {
+            const raw = ev.replace(cat.prefix, '');
+            const display = key === 'btc' ? raw.substring(0, 6) + '\u2026' + raw.slice(-5) : raw;
+            const nodeId  = `N_IND_${key}_${i}`;
+            els.push({ data: { id: nodeId, label: display, fullLabel: raw, nt: 'indicator', color: cat.color } });
+            els.push({ data: { source: cat.id, target: nodeId, et: 'leaf', color: cat.color } });
         });
-    </script>
+    });
+
+    /* Tear down previous instance ────────────────────────────── */
+    if (cy) cy.destroy();
+    const container = document.getElementById('cy');
+    container.innerHTML = '';   // remove empty-state placeholder
+
+    /* Shared glow helper ─────────────────────────────────────── */
+    const GLOW = (color, blur = 22, opacity = 0.88) => ({
+        'shadow-blur': blur, 'shadow-color': color,
+        'shadow-offset-x': 0, 'shadow-offset-y': 0, 'shadow-opacity': opacity,
+    });
+    const LABEL = {
+        'label': 'data(label)',
+        'font-family': 'ui-monospace, SFMono-Regular, "Cascadia Mono", monospace',
+        'text-wrap': 'wrap', 'text-max-width': '96px',
+        'text-valign': 'bottom', 'text-halign': 'center',
+        'text-margin-y': 7,
+        'text-outline-color': '#080c14', 'text-outline-width': 3,
+        'color': '#94a3b8', 'font-weight': '600',
+    };
+
+    cy = cytoscape({
+        container,
+        elements: els,
+        style: [
+            /* Base node */
+            { selector: 'node', style: { ...LABEL, 'background-color': '#334155', 'border-width': 0, 'font-size': '10px' } },
+
+            /* Level 0 — Alias root (red glow, largest) */
+            { selector: 'node[nt="alias"]', style: {
+                'background-color': '#b91c1c', 'width': 56, 'height': 56,
+                'font-size': '11px', 'font-weight': '700', 'color': '#fca5a5',
+                ...GLOW('#ef4444', 38, 0.92),
+            }},
+
+            /* Level 1 — Identity (emerald glow) */
+            { selector: 'node[nt="identity"]', style: {
+                'background-color': '#166534', 'width': 46, 'height': 46,
+                'font-size': '10px', 'font-weight': '700', 'color': '#86efac',
+                ...GLOW('#22c55e', 28, 0.85),
+            }},
+
+            /* Level 1 — Category nodes */
+            { selector: 'node[nt="cat"]', style: { 'width': 36, 'height': 36, 'font-size': '9px', 'font-weight': '700', 'letter-spacing': '0.04em' } },
+            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#92400e', 'color': '#fde68a', ...GLOW('#d97706', 22, 0.8) } },
+            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#1e3a8a', 'color': '#93c5fd', ...GLOW('#3b82f6', 22, 0.8) } },
+            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#581c87', 'color': '#d8b4fe', ...GLOW('#a855f7', 22, 0.8) } },
+
+            /* Level 2 — Indicator leaf nodes (tiny) */
+            { selector: 'node[nt="indicator"]', style: { 'width': 13, 'height': 13, 'font-size': '9px', 'font-weight': '500' } },
+            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#78350f', 'color': '#fde68a', ...GLOW('#ca8a04', 10, 0.65) } },
+            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#1e3a8a', 'color': '#bfdbfe', ...GLOW('#3b82f6', 10, 0.65) } },
+            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#4a1d96', 'color': '#e9d5ff', ...GLOW('#a855f7', 10, 0.65) } },
+
+            /* Selected ring */
+            { selector: 'node:selected', style: { 'border-width': 2, 'border-color': '#ffffff', 'border-opacity': 0.5 } },
+
+            /* Base edge */
+            { selector: 'edge', style: { 'width': 1, 'line-color': '#1e293b', 'target-arrow-shape': 'none', 'curve-style': 'bezier', 'opacity': 0.5 } },
+
+            /* alias → identity  (dashed emerald with arrow) */
+            { selector: 'edge[et="identifies"]', style: {
+                'width': 1.8, 'line-color': '#22c55e',
+                'line-style': 'dashed', 'line-dash-pattern': [9, 5],
+                'target-arrow-shape': 'triangle', 'target-arrow-color': '#22c55e',
+                'opacity': 0.55,
+            }},
+
+            /* alias → category  (solid, colored) */
+            { selector: 'edge[et="branch"]', style: { 'width': 1.6, 'opacity': 0.45 } },
+            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#d97706' } },
+            { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#3b82f6' } },
+            { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#a855f7' } },
+
+            /* category → indicator  (faint dotted) */
+            { selector: 'edge[et="leaf"]', style: { 'width': 0.9, 'opacity': 0.22, 'line-style': 'dotted' } },
+            { selector: 'edge[et="leaf"][color="btc"]',   style: { 'line-color': '#d97706' } },
+            { selector: 'edge[et="leaf"][color="email"]', style: { 'line-color': '#3b82f6' } },
+            { selector: 'edge[et="leaf"][color="stylo"]', style: { 'line-color': '#a855f7' } },
+        ],
+
+        layout: {
+            name: 'breadthfirst',
+            roots: ['#N_ALIAS'],          // anchor tree at the alias
+            directed: false,
+            padding: 65,
+            spacingFactor: 1.9,
+            avoidOverlap: true,
+            nodeDimensionsIncludeLabels: true,
+            animate: true,
+            animationDuration: 520,
+            animationEasing: 'ease-out-expo',
+        }
+    });
+
+    /* Tooltip: hover shows full untruncated value ─────────────── */
+    cy.on('mouseover', 'node', e => {
+        tooltip.textContent = e.target.data('fullLabel') || e.target.data('label');
+        tooltip.style.display = 'block';
+    });
+    cy.on('mousemove', 'node', e => {
+        tooltip.style.left = (e.originalEvent.clientX + 14) + 'px';
+        tooltip.style.top  = (e.originalEvent.clientY - 10) + 'px';
+    });
+    cy.on('mouseout', 'node', () => { tooltip.style.display = 'none'; });
+
+    /* Click to highlight closed neighbourhood ─────────────────── */
+    cy.on('tap', 'node', e => {
+        const n = e.target;
+        cy.elements().not(n.closedNeighborhood()).style({ opacity: 0.15 });
+        n.closedNeighborhood().style({ opacity: 1 });
+    });
+    cy.on('tap', e => {
+        if (e.target === cy) cy.elements().style({ opacity: 1 });
+    });
+}
+
+/* ── Search ─────────────────────────────────────────────────── */
+document.getElementById('searchInput').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim();
+    if (!q) { renderList(globalData); return; }
+    const filtered = globalData.flatMap(t => {
+        const aHit = t.darkweb_alias.toLowerCase().includes(q);
+        const sHits = t.deanonymization_results.filter(s => s.suspect_name.toLowerCase().includes(q));
+        if (aHit || sHits.length > 0)
+            return [{ ...t, deanonymization_results: aHit ? t.deanonymization_results : sHits }];
+        return [];
+    });
+    renderList(filtered);
+});
+</script>
 </body>
 </html>
