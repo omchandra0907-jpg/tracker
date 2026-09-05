@@ -18,7 +18,9 @@
     "stylometry_markers": [
       "privnote",
       "jabber"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-10"
   },
   {
     "real_name": "Mikhail Matveev",
@@ -38,7 +40,9 @@
     "stylometry_markers": [
       "bro",
       "vouch"
-    ]
+    ],
+    "category": "Marketplace Vendor",
+    "last_scan_date": "2026-07-25"
   },
   {
     "real_name": "Dmitry Khoroshev",
@@ -59,7 +63,9 @@
     "stylometry_markers": [
       "negotiator",
       "onionmail"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-11"
   },
   {
     "real_name": "Maksim Yakubets",
@@ -79,7 +85,9 @@
     "stylometry_markers": [
       "drider",
       "banker"
-    ]
+    ],
+    "category": "Marketplace Vendor",
+    "last_scan_date": "2026-07-17"
   },
   {
     "real_name": "Park Jin Hyok",
@@ -99,7 +107,9 @@
       "heist",
       "swap",
       "recon"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-07-02"
   },
   {
     "real_name": "Dmytro Rashevskyi",
@@ -122,7 +132,9 @@
       "anonymizer",
       "no logs",
       "opsec"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-07-24"
   },
   {
     "real_name": "Yevgeniy Silayev",
@@ -142,7 +154,9 @@
       "obfuscator",
       "stub",
       "runtime"
-    ]
+    ],
+    "category": "Malware / Tooling Vendor",
+    "last_scan_date": "2026-07-01"
   },
   {
     "real_name": "Yaroslav Vasinskyi",
@@ -163,7 +177,9 @@
     "stylometry_markers": [
       "kaseya",
       "split"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-18"
   },
   {
     "real_name": "Elena Rostova",
@@ -183,7 +199,9 @@
       "mirror",
       "database",
       "sql injection"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-07-09"
   },
   {
     "real_name": "Evgeniy Bogachev",
@@ -203,7 +221,9 @@
       "inject",
       "builder",
       "license key"
-    ]
+    ],
+    "category": "Malware / Tooling Vendor",
+    "last_scan_date": "2026-07-16"
   },
   {
     "real_name": "Roman Semenov",
@@ -224,7 +244,9 @@
     "stylometry_markers": [
       "relayer",
       "privacy pool"
-    ]
+    ],
+    "category": "Money Laundering / Mixer",
+    "last_scan_date": "2026-06-29"
   },
   {
     "real_name": "Armando Ojeda Aviles",
@@ -246,7 +268,9 @@
       "conversion",
       "laundering",
       "p2p"
-    ]
+    ],
+    "category": "Money Laundering / Mixer",
+    "last_scan_date": "2026-07-27"
   },
   {
     "real_name": "Aleksandr Sikerin",
@@ -267,7 +291,9 @@
     "stylometry_markers": [
       "rust",
       "extortion"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-28"
   },
   {
     "real_name": "Vitaly Kovalev",
@@ -286,7 +312,9 @@
     "stylometry_markers": [
       "banking trojan",
       "lateral movement"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-24"
   },
   {
     "real_name": "Denis Kulkov",
@@ -307,7 +335,9 @@
     "stylometry_markers": [
       "cvv",
       "validity rate"
-    ]
+    ],
+    "category": "Carding / Fraud Vendor",
+    "last_scan_date": "2026-07-30"
   },
   {
     "real_name": "Igor Turashev",
@@ -326,7 +356,9 @@
     "stylometry_markers": [
       "macros",
       "maldoc"
-    ]
+    ],
+    "category": "Marketplace Vendor",
+    "last_scan_date": "2026-07-30"
   },
   {
     "real_name": "Rinat Zandiev",
@@ -345,7 +377,9 @@
     "stylometry_markers": [
       "double extortion",
       "pipeline"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-05"
   },
   {
     "real_name": "Alexey Bilyuchenko",
@@ -364,7 +398,9 @@
     "stylometry_markers": [
       "liquidation",
       "fiat gateway"
-    ]
+    ],
+    "category": "Money Laundering / Mixer",
+    "last_scan_date": "2026-07-21"
   },
   {
     "real_name": "Sandu Diaconu",
@@ -385,7 +421,9 @@
     "stylometry_markers": [
       "browser logs",
       "cookies"
-    ]
+    ],
+    "category": "Malware / Tooling Vendor",
+    "last_scan_date": "2026-07-31"
   },
   {
     "real_name": "Danil Potekhin",
@@ -404,7 +442,9 @@
     "stylometry_markers": [
       "seed phrase",
       "drainer"
-    ]
+    ],
+    "category": "Malware / Tooling Vendor",
+    "last_scan_date": "2026-07-27"
   },
   {
     "real_name": "Sergey Zolotarev",
@@ -425,7 +465,9 @@
     "stylometry_markers": [
       "callback",
       "partial encryption"
-    ]
+    ],
+    "category": "Ransomware Operator",
+    "last_scan_date": "2026-07-12"
   },
   {
     "real_name": "Oleg Koshkin",
@@ -444,7 +486,9 @@
     "stylometry_markers": [
       "scantime",
       "memory injection"
-    ]
+    ],
+    "category": "Marketplace Vendor",
+    "last_scan_date": "2026-07-31"
   },
   {
     "real_name": "Boris Chen",
@@ -464,7 +508,9 @@
       "citrix",
       "fortinet",
       "living off the land"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-08-01"
   },
   {
     "real_name": "Tariq Al-Mansoor",
@@ -485,7 +531,9 @@
     "stylometry_markers": [
       "offshore",
       "dmca ignored"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-07-27"
   },
   {
     "real_name": "Ilya Sachkov",
@@ -506,6 +554,8 @@
     "stylometry_markers": [
       "0day",
       "poc"
-    ]
+    ],
+    "category": "Infrastructure / Access Broker",
+    "last_scan_date": "2026-07-08"
   }
 ]
