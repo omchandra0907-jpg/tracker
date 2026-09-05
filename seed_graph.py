@@ -11,7 +11,7 @@ PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 def seed_database():
     if not URI or not PASSWORD:
-        print("❌ Error: Missing Neo4j credentials in .env file.")
+        print("Error: Missing Neo4j credentials in .env file.")
         return
 
     driver = GraphDatabase.driver(URI, auth=(USERNAME, PASSWORD))
@@ -32,7 +32,7 @@ def seed_database():
             for sl in actor.get("stylometry_markers", []):
                 session.run("MATCH (a:Actor {name: $name}) MERGE (s:Slang {term: $slang}) MERGE (a)-[:KNOWN_SLANG]->(s)", name=actor["real_name"], slang=sl.lower())
 
-    print("\n✅ Neo4j Database seeded with all 25 Advanced Profiles!")
+    print("\n Neo4j Database seeded with all 25 Advanced Profiles!")
     driver.close()
 
 if __name__ == "__main__":
