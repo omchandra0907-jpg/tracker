@@ -1,20 +1,26 @@
+import os
 import json
+from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
-URI = "neo4j+s://2d3841bc.databases.neo4j.io"
-USERNAME = "2d3841bc"
-PASSWORD = "lvaNOU1cbNbWXrn7sB3GyWO8syKCPOhZkQ_qiaGcTZo"
+load_dotenv()
+
+URI = os.getenv("NEO4J_URI")
+USERNAME = os.getenv("NEO4J_USERNAME")
+PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 def seed_database():
+    if not URI or not PASSWORD:
+        print("❌ Error: Missing Neo4j credentials in .env file.")
+        return
+
     driver = GraphDatabase.driver(URI, auth=(USERNAME, PASSWORD))
     with open("osint_db.json", "r") as f: osint_data = json.load(f)
 
     with driver.session() as session:
-        session.run("MATCH (n) DETACH DELETE n") # Clears old data
-        
+        session.run("MATCH (n) DETACH DELETE n")
         for actor in osint_data:
             session.run("MERGE (a:Actor {name: $real_name}) SET a.alias = $surface_alias, a.platform = $platform", **actor)
-            
             for w in actor.get("known_wallets", []):
                 session.run("MATCH (a:Actor {name: $name}) MERGE (w:Wallet {address: $wallet}) MERGE (a)-[:OWNS_WALLET]->(w)", name=actor["real_name"], wallet=w)
             for em in actor.get("known_emails", []):

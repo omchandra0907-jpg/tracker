@@ -1,5 +1,9 @@
+import os
 import json
 from collections import defaultdict
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from neo4j import GraphDatabase
@@ -20,7 +24,6 @@ class CorrelationEngine:
 
         self.actor_lookup = {actor["real_name"]: actor for actor in self.osint_data}
 
-        # Offline Fallback Index
         self.wallet_index = defaultdict(list)
         self.email_index = defaultdict(list)
         self.comms_index = defaultdict(list)
@@ -32,14 +35,15 @@ class CorrelationEngine:
 
         self.neo4j_driver = None
         if NEO4J_AVAILABLE:
-            try:
-                self.neo4j_driver = GraphDatabase.driver(
-                    "neo4j+s://2d3841bc.databases.neo4j.io",
-                    auth=("2d3841bc", "lvaNOU1cbNbWXrn7sB3GyWO8syKCPOhZkQ_qiaGcTZo")
-                )
-                self.neo4j_driver.verify_connectivity()
-            except Exception:
-                self.neo4j_driver = None
+            uri = os.getenv("NEO4J_URI")
+            user = os.getenv("NEO4J_USERNAME")
+            password = os.getenv("NEO4J_PASSWORD")
+            if uri and user and password:
+                try:
+                    self.neo4j_driver = GraphDatabase.driver(uri, auth=(user, password))
+                    self.neo4j_driver.verify_connectivity()
+                except Exception:
+                    self.neo4j_driver = None
 
     def _build_inverted_indexes(self):
         for actor in self.osint_data:
@@ -86,7 +90,6 @@ class CorrelationEngine:
         matches = []
         with self.neo4j_driver.session() as session:
             records = session.run(query, wallets=wallets, emails=emails, comms=comms, onions=onions, raw_text=raw_text)
-            
             raw_lower = raw_text.lower()
             ttp_terms = ["escrow", "ransom", "payload", "affiliate", "botnet", "dump", "fud", "bypass"]
             found_ttps = [t for t in ttp_terms if t in raw_lower]
@@ -124,5 +127,71 @@ class CorrelationEngine:
         return sorted(matches, key=lambda x: x["confidence_score"], reverse=True)
 
     def _correlate_inverted_index(self, iocs: dict, raw_text: str) -> list:
-        # Implementation is unchanged for offline fallback
-        return [] # Full offline fallback is still active natively if Aura fails.
+        scores = defaultdict(lambda: {
+            "crypto": 0, "email": 0, "comms": 0, "infrastructure": 0,
+            "stylometry": 0, "alias": 0, "ttps": 0, "temporal": 0,
+            "evidence": []
+        })
+        raw_lower = raw_text.lower()
+
+        for w in (iocs.get("btc_wallets", []) + iocs.get("xmr_wallets", []) + iocs.get("usdt_wallets", [])):
+            if w in self.wallet_index:
+                for s in self.wallet_index[w]:
+                    scores[s]["crypto"] = 100
+                    scores[s]["evidence"].append(f"Blockchain Match: {w}")
+
+        for em in iocs.get("emails", []):
+            if em.lower() in self.email_index:
+                for s in self.email_index[em.lower()]:
+                    scores[s]["email"] = 85
+                    scores[s]["evidence"].append(f"Email Match: {em}")
+
+        for cm in (iocs.get("tox_ids", []) + iocs.get("jabber_ids", []) + iocs.get("telegram_handles", [])):
+            if cm.lower() in self.comms_index:
+                for s in self.comms_index[cm.lower()]:
+                    scores[s]["comms"] = 80
+                    scores[s]["evidence"].append(f"Comms Match: {cm}")
+
+        for on in iocs.get("onion_urls", []):
+            clean_on = on.lower().replace("http://", "").replace("https://", "").strip("/")
+            if clean_on in self.onion_index:
+                for s in self.onion_index[clean_on]:
+                    scores[s]["infrastructure"] = 75
+                    scores[s]["evidence"].append(f"Infrastructure Match: {on}")
+
+        for sl, suspects in self.slang_index.items():
+            if sl in raw_lower:
+                for s in suspects:
+                    scores[s]["stylometry"] += 15
+                    scores[s]["evidence"].append(f"Stylometry Match: {sl}")
+
+        ttp_terms = ["escrow", "ransom", "payload", "affiliate", "botnet", "dump", "fud", "bypass"]
+        found_ttps = [t for t in ttp_terms if t in raw_lower]
+
+        ranked = []
+        for name, data in scores.items():
+            bounded_stylo = min(data["stylometry"], 30)
+            ttp_score = min(len(found_ttps) * 15, 45) if (data["crypto"] > 0 or data["email"] > 0 or bounded_stylo > 0) else 0
+
+            hard_val = max(data["crypto"], data["email"], data["comms"], data["infrastructure"], data["alias"])
+            final_conf = min(hard_val + bounded_stylo, 100) if (hard_val > 0 or bounded_stylo > 0) else 0
+
+            if final_conf > 0:
+                profile = self.actor_lookup.get(name, {})
+                ranked.append({
+                    "suspect_name": name,
+                    "surface_platform": profile.get("platform", "Underground Channel"),
+                    "confidence_score": final_conf,
+                    "evidence": data["evidence"],
+                    "breakdown": {
+                        "crypto": data["crypto"],
+                        "email": data["email"],
+                        "comms": data["comms"],
+                        "infrastructure": data["infrastructure"],
+                        "stylometry": bounded_stylo,
+                        "alias": data["alias"],
+                        "ttps": ttp_score,
+                        "temporal": 0
+                    }
+                })
+        return sorted(ranked, key=lambda x: x["confidence_score"], reverse=True)
