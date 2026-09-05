@@ -21,7 +21,7 @@
             width: 100%;
             height: 52%;
             background-color: #070a12;
-            background-image: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(34, 211, 238, 0.035) 0%, transparent 75%);
+            background-image: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(125, 155, 176, 0.035) 0%, transparent 75%);
         }
 
         .suspect-card {
@@ -32,13 +32,11 @@
             border-radius: 7px;
         }
         .suspect-card:hover {
-            border-color: rgba(34, 211, 238, 0.4);
-            box-shadow: 0 0 16px rgba(34, 211, 238, 0.14);
+            border-color: rgba(125, 155, 176, 0.4);
             transform: translateY(-1px);
         }
         .suspect-card.active {
-            border-color: #22d3ee;
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.25);
+            border-color: #7d9bb0;
             background: rgba(15, 23, 42, 0.95);
         }
         .conf-bar { height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 7px; }
@@ -63,7 +61,7 @@
             justify-content: space-between;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .matrix-card:hover { border-color: rgba(34, 211, 238, 0.25); }
+        .matrix-card:hover { border-color: rgba(125, 155, 176, 0.25); }
 
         .info-tip {
             display: inline-flex;
@@ -78,7 +76,7 @@
             margin-left: 6px;
             cursor: help;
         }
-        .info-tip:hover { color: #22d3ee; background: #0f172a; border: 1px solid #22d3ee; }
+        .info-tip:hover { color: #7d9bb0; background: #0f172a; border: 1px solid #7d9bb0; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #080c14; }
@@ -90,7 +88,7 @@
             width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
             font-size: 14px; cursor: pointer; transition: all 0.15s;
         }
-        .graph-ctrl-btn:hover { border-color: #22d3ee; color: #22d3ee; background: #131e33; }
+        .graph-ctrl-btn:hover { border-color: #7d9bb0; color: #7d9bb0; background: #131e33; }
 
         #cy-tooltip {
             position: fixed; padding: 5px 11px; background: #0e1420; border: 1px solid #334155;
@@ -105,13 +103,12 @@
         .modal-box {
             background: #0e1420; border: 1px solid #1e3a5f; border-radius: 10px;
             width: 560px; max-width: 93vw; padding: 24px;
-            box-shadow: 0 0 60px rgba(34,211,238,0.1), 0 24px 64px rgba(0,0,0,0.65);
         }
         .preset-btn {
             font-size:10px; padding:4px 10px; border-radius:4px; border:1px solid #1e3a5f;
-            background:rgba(34,211,238,0.05); color:#38bdf8; cursor:pointer; transition: all 0.15s;
+            background:rgba(125, 155, 176,0.05); color:#7d9bb0; cursor:pointer; transition: all 0.15s;
         }
-        .preset-btn:hover { background:rgba(34,211,238,0.13); border-color:rgba(34,211,238,0.4); }
+        .preset-btn:hover { background:rgba(125, 155, 176,0.13); border-color:rgba(125, 155, 176,0.4); }
         .drop-zone {
             border: 1px dashed #334155; border-radius: 6px;
             padding: 14px; text-align: center; cursor: pointer;
@@ -119,8 +116,8 @@
             transition: border-color 0.2s, background 0.2s;
         }
         .drop-zone:hover, .drop-zone.drag-over {
-            border-color: rgba(34,211,238,0.5);
-            background: rgba(34,211,238,0.04);
+            border-color: rgba(125, 155, 176,0.5);
+            background: rgba(125, 155, 176,0.04);
         }
         .intercept-textarea {
             width:100%; height:136px; background:#080c14; border:1px solid #1e293b;
@@ -130,7 +127,7 @@
         .intercept-toast {
             position:fixed; bottom:24px; right:24px; z-index:600; padding:10px 16px;
             border-radius:7px; font-size:12px; font-weight:600; background:#0e1420;
-            border:1px solid rgba(34,211,238,0.35); color:#22d3ee; box-shadow:0 0 24px rgba(34,211,238,0.15);
+            border:1px solid rgba(125, 155, 176,0.35); color:#7d9bb0
         }
     </style>
 </head>
@@ -141,14 +138,14 @@
 <!-- Top Bar -->
 <header style="padding:13px 24px;border-bottom:1px solid #0f172a;background:#080c14;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
     <div>
-        <h1 style="font-size:18px;font-weight:700;color:#22d3ee;letter-spacing:-0.3px;">
-            ⬡ DoxInt <3
+        <h1 style="font-size:18px;font-weight:700;color:#7d9bb0;letter-spacing:-0.3px;">
+            ⬡ DoxInt
         </h1>
         <p style="font-size:11px;color:#475569;margin-top:2px;">SIH · Dark Web Threat Intelligence Platform</p>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
         <div style="display:flex;align-items:center;gap:6px;">
-            <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e;"></div>
+            <div style="width:7px;height:7px;border-radius:50%;background:#73977e;"></div>
             <span style="font-size:11px;color:#475569;">made by 6chan | Active</span>
         </div>
         <div id="stats-badge" style="display:none;font-size:11px;color:#475569;padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
@@ -163,7 +160,7 @@
                     style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">Report</button>
         </div>
         <button onclick="openInterceptModal()"
-                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);color:#22d3ee;cursor:pointer;">
+                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.35);background:rgba(125, 155, 176,0.07);color:#7d9bb0;cursor:pointer;">
             + Intercept Raw Post
         </button>
     </div>
@@ -181,14 +178,14 @@
             <div id="queryBadge" style="display:none;margin-top:6px;font-size:10px;font-family:ui-monospace,monospace;padding:2px 8px;border-radius:4px;width:fit-content;"></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;padding:8px 9px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;">
-            <span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Timeline Filter</span>
+            <span style="font-size:9px;font-weight:700;color:#64748b;">Timeline Filter</span>
             <div style="display:flex;gap:6px;align-items:center;">
                 <input id="timelineStart" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
                 <span style="color:#475569;font-size:10px;">→</span>
                 <input id="timelineEnd" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
             </div>
             <div style="display:flex;gap:6px;">
-                <button onclick="applyTimelineFilter()" style="flex:1;font-size:10px;font-weight:600;padding:5px;border-radius:5px;border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);color:#22d3ee;cursor:pointer;">Apply</button>
+                <button onclick="applyTimelineFilter()" style="flex:1;font-size:10px;font-weight:600;padding:5px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.35);background:rgba(125, 155, 176,0.07);color:#7d9bb0;cursor:pointer;">Apply</button>
                 <button onclick="clearTimelineFilter()" style="font-size:10px;padding:5px 8px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#64748b;cursor:pointer;">Clear</button>
             </div>
         </div>
@@ -202,16 +199,16 @@
         <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid #0f172a;background:#0a0f1d;flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:12px;font-weight:600;color:#94a3b8;">Entity Relationship Graph</span>
-                <span id="activeTargetLabel" style="display:none;font-size:10px;padding:2px 8px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.25);border-radius:20px;color:#22d3ee;"></span>
+                <span id="activeTargetLabel" style="display:none;font-size:10px;padding:2px 8px;background:rgba(125, 155, 176,0.08);border:1px solid rgba(125, 155, 176,0.25);border-radius:20px;color:#7d9bb0;"></span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#475569;">
-                <span><span class="ldot" style="background:#22c55e;"></span> Target</span>
-                <span><span class="ldot" style="background:#ef4444;"></span> Alias</span>
-                <span><span class="ldot" style="background:#eab308;"></span> Crypto</span>
-                <span><span class="ldot" style="background:#3b82f6;"></span> Email</span>
-                <span><span class="ldot" style="background:#06b6d4;"></span> Comms</span>
-                <span><span class="ldot" style="background:#a855f7;"></span> Stylometry</span>
-                <span><span class="ldot" style="background:#10b981;"></span> Infrastructure</span>
+                <span><span class="ldot" style="background:#73977e;"></span> Target</span>
+                <span><span class="ldot" style="background:#a56b64;"></span> Alias</span>
+                <span><span class="ldot" style="background:#ab8a5a;"></span> Crypto</span>
+                <span><span class="ldot" style="background:#7086a8;"></span> Email</span>
+                <span><span class="ldot" style="background:#6f9299;"></span> Comms</span>
+                <span><span class="ldot" style="background:#9483ab;"></span> Stylometry</span>
+                <span><span class="ldot" style="background:#6a9a80;"></span> Infrastructure</span>
             </div>
         </div>
 
@@ -237,10 +234,10 @@
         <!-- Evidence Breakdown Matrix (2-Column Grid) -->
         <div id="matrixPanel" style="flex:1;border-top:1px solid #0f172a;background:#080c14;padding:12px 20px;display:flex;flex-direction:column;overflow:hidden;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
-                <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
+                <span style="font-size:11px;font-weight:700;color:#64748b;">
                     Multi-Vector Attribution Matrix (8 Evidence Criteria)
                 </span>
-                <span id="matrixSuspectName" style="font-size:11px;color:#22d3ee;font-family:ui-monospace,monospace;">
+                <span id="matrixSuspectName" style="font-size:11px;color:#7d9bb0;font-family:ui-monospace,monospace;">
                     No Target Selected
                 </span>
             </div>
@@ -250,17 +247,17 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
+                            ⛓ Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
                         </span>
-                        <span id="mCryptoStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.3);">0%</span>
+                        <span id="mCryptoStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(171, 138, 90,0.1);color:#ab8a5a;border:1px solid rgba(171, 138, 90,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mCryptoVal" style="font-weight:700;color:#eab308;">0%</span>
+                            <span id="mCryptoVal" style="font-weight:700;color:#ab8a5a;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCryptoBar" style="height:100%;width:0%;background:#eab308;box-shadow:0 0 8px #eab308;transition:width 0.35s;"></div>
+                            <div id="mCryptoBar" style="height:100%;width:0%;background:#ab8a5atransition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -269,17 +266,17 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
+                            ✉ Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
                         </span>
-                        <span id="mEmailStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);">0%</span>
+                        <span id="mEmailStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(112, 134, 168,0.1);color:#7086a8;border:1px solid rgba(112, 134, 168,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mEmailVal" style="font-weight:700;color:#3b82f6;">0%</span>
+                            <span id="mEmailVal" style="font-weight:700;color:#7086a8;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mEmailBar" style="height:100%;width:0%;background:#3b82f6;box-shadow:0 0 8px #3b82f6;transition:width 0.35s;"></div>
+                            <div id="mEmailBar" style="height:100%;width:0%;background:#7086a8transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -290,15 +287,15 @@
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
                             Encrypted Comms <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">[?]</span>
                         </span>
-                        <span id="mCommsStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);">0%</span>
+                        <span id="mCommsStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(111, 146, 153,0.1);color:#6f9299;border:1px solid rgba(111, 146, 153,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mCommsVal" style="font-weight:700;color:#06b6d4;">0%</span>
+                            <span id="mCommsVal" style="font-weight:700;color:#6f9299;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCommsBar" style="height:100%;width:0%;background:#06b6d4;box-shadow:0 0 8px #06b6d4;transition:width 0.35s;"></div>
+                            <div id="mCommsBar" style="height:100%;width:0%;background:#6f9299transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -309,15 +306,15 @@
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
                             Dark Infrastructure <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">[?]</span>
                         </span>
-                        <span id="mInfraStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">0%</span>
+                        <span id="mInfraStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(106, 154, 128,0.1);color:#6a9a80;border:1px solid rgba(106, 154, 128,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mInfraVal" style="font-weight:700;color:#10b981;">0%</span>
+                            <span id="mInfraVal" style="font-weight:700;color:#6a9a80;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mInfraBar" style="height:100%;width:0%;background:#10b981;box-shadow:0 0 8px #10b981;transition:width 0.35s;"></div>
+                            <div id="mInfraBar" style="height:100%;width:0%;background:#6a9a80transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -326,17 +323,17 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            ✍ Stylometry / Slang <span class="info-tip" title="Linguistic behavioral profiling based on unique underground forum slang, grammar quirks, and vocabulary. (Capped at 30% to prevent false positives).">[?]</span>
+                            Stylometry / Slang <span class="info-tip" title="Linguistic behavioral profiling based on unique underground forum slang, grammar quirks, and vocabulary. (Capped at 30% to prevent false positives).">[?]</span>
                         </span>
-                        <span id="mStyloStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(168,85,247,0.1);color:#a855f7;border:1px solid rgba(168,85,247,0.3);">0%</span>
+                        <span id="mStyloStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(148, 131, 171,0.1);color:#9483ab;border:1px solid rgba(148, 131, 171,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight (Max 30%)</span>
-                            <span id="mStyloVal" style="font-weight:700;color:#a855f7;">0%</span>
+                            <span id="mStyloVal" style="font-weight:700;color:#9483ab;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mStyloBar" style="height:100%;width:0%;background:#a855f7;box-shadow:0 0 8px #a855f7;transition:width 0.35s;"></div>
+                            <div id="mStyloBar" style="height:100%;width:0%;background:#9483abtransition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -347,15 +344,15 @@
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
                             Alias Correlation <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">[?]</span>
                         </span>
-                        <span id="mAliasStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);">0%</span>
+                        <span id="mAliasStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(165, 107, 100,0.1);color:#a56b64;border:1px solid rgba(165, 107, 100,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mAliasVal" style="font-weight:700;color:#ef4444;">0%</span>
+                            <span id="mAliasVal" style="font-weight:700;color:#a56b64;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mAliasBar" style="height:100%;width:0%;background:#ef4444;box-shadow:0 0 8px #ef4444;transition:width 0.35s;"></div>
+                            <div id="mAliasBar" style="height:100%;width:0%;background:#a56b64transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -366,15 +363,15 @@
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
                             Threat TTP Alignment <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">[?]</span>
                         </span>
-                        <span id="mTtpStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.3);">0%</span>
+                        <span id="mTtpStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(125, 155, 176,0.1);color:#7d9bb0;border:1px solid rgba(125, 155, 176,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mTtpVal" style="font-weight:700;color:#0ea5e9;">0%</span>
+                            <span id="mTtpVal" style="font-weight:700;color:#7d9bb0;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTtpBar" style="height:100%;width:0%;background:#0ea5e9;box-shadow:0 0 8px #0ea5e9;transition:width 0.35s;"></div>
+                            <div id="mTtpBar" style="height:100%;width:0%;background:#7d9bb0transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -385,15 +382,15 @@
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
                             Temporal Activity <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">[?]</span>
                         </span>
-                        <span id="mTempStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(244,63,94,0.1);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">0%</span>
+                        <span id="mTempStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(156, 102, 114,0.1);color:#9c6672;border:1px solid rgba(156, 102, 114,0.3);">0%</span>
                     </div>
                     <div>
                         <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
                             <span>Match Weight</span>
-                            <span id="mTempVal" style="font-weight:700;color:#f43f5e;">0%</span>
+                            <span id="mTempVal" style="font-weight:700;color:#9c6672;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTempBar" style="height:100%;width:0%;background:#f43f5e;box-shadow:0 0 8px #f43f5e;transition:width 0.35s;"></div>
+                            <div id="mTempBar" style="height:100%;width:0%;background:#9c6672transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -402,26 +399,26 @@
             <!-- Advanced Correlation: Infra Misconfig + Persona Link (seeded demo endpoints) -->
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid #0f172a;display:flex;gap:14px;flex-wrap:wrap;">
                 <div style="flex:1;min-width:260px;">
-                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
-                        🌐 Infra Misconfig Scan <span class="info-tip" title="Checks a .onion address for exposed status pages, reused SSL certs, and banner leaks pointing to a clearnet origin. Seeded with demo records pending live scanner integration.">[?]</span>
+                    <span style="font-size:10px;font-weight:700;color:#64748b;">
+                        Infra Misconfig Scan <span class="info-tip" title="Checks a .onion address for exposed status pages, reused SSL certs, and banner leaks pointing to a clearnet origin. Seeded with demo records pending live scanner integration.">[?]</span>
                     </span>
                     <div style="display:flex;gap:6px;margin-top:6px;">
                         <input id="infraOnionInput" type="text" placeholder="target.onion"
                                style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
-                        <button onclick="runInfraScan()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(16,185,129,0.35);background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;">Scan</button>
+                        <button onclick="runInfraScan()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(106, 154, 128,0.35);background:rgba(106, 154, 128,0.08);color:#6a9a80;cursor:pointer;">Scan</button>
                     </div>
                     <div id="infraScanResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
                 </div>
                 <div style="flex:1;min-width:260px;">
-                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
-                        🎭 Persona Migration Check <span class="info-tip" title="Compares two surface aliases for stylometric overlap suggesting a rebrand/migration. Seeded with demo pairs pending a live stylometry model.">[?]</span>
+                    <span style="font-size:10px;font-weight:700;color:#64748b;">
+                        Persona Migration Check <span class="info-tip" title="Compares two surface aliases for stylometric overlap suggesting a rebrand/migration. Seeded with demo pairs pending a live stylometry model.">[?]</span>
                     </span>
                     <div style="display:flex;gap:6px;margin-top:6px;">
                         <input id="personaAInput" type="text" placeholder="alias A"
                                style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
                         <input id="personaBInput" type="text" placeholder="alias B"
                                style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
-                        <button onclick="runPersonaLink()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(168,85,247,0.35);background:rgba(168,85,247,0.08);color:#a855f7;cursor:pointer;">Check</button>
+                        <button onclick="runPersonaLink()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(148, 131, 171,0.35);background:rgba(148, 131, 171,0.08);color:#9483ab;cursor:pointer;">Check</button>
                     </div>
                     <div id="personaLinkResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
                 </div>
@@ -435,14 +432,14 @@
     <div class="modal-box">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
             <div>
-                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">Live Intercept Analysis</h2>
+                <h2 style="font-size:15px;font-weight:700;color:#7d9bb0;">Live Intercept Analysis</h2>
                 <p style="font-size:11px;color:#475569;margin-top:3px;">Submit unstructured text or upload a forensic file to trigger de-anonymization.</p>
             </div>
             <button onclick="closeInterceptModal()" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;">✕</button>
         </div>
 
         <div style="margin-bottom:12px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Source Handle / Forum Alias</label>
+            <label style="font-size:10px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Source Handle / Forum Alias</label>
             <input id="interceptAlias" type="text" placeholder="e.g. shadow_broker_99  (optional)"
                    style="width:100%;padding:8px 10px;background:#080c14;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;">
         </div>
@@ -451,33 +448,33 @@
         <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput" style="display:none;" accept=".txt,.log,.json,.eml,.csv,.md" onchange="handleFileSelect(event)">
             <p style="font-size:11px;color:#94a3b8;">
-                <span style="color:#22d3ee;font-weight:600;">Click to upload</span> or drag &amp; drop a file
+                 <span style="color:#7d9bb0;font-weight:600;">Click to upload</span> or drag &amp; drop a file
             </p>
             <p style="font-size:9px;color:#475569;margin-top:2px;">.txt · .log · .json · .eml · .csv · .md</p>
             <div id="fileInfoBadge" style="display:none;margin-top:7px;">
-                <span id="fileNameDisplay" style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);padding:2px 9px;border-radius:4px;"></span>
+                <span id="fileNameDisplay" style="font-size:10px;color:#73977e;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);padding:2px 9px;border-radius:4px;"></span>
             </div>
         </div>
 
         <div style="margin-bottom:14px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Raw Text Content *</label>
+            <label style="font-size:10px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Raw Text Content *</label>
             <textarea id="interceptContent" class="intercept-textarea" placeholder="Paste forum post, chat dump, or ransom note…"></textarea>
         </div>
 
         <div style="margin-bottom:18px;">
-            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;text-transform:uppercase;">Quick Presets</p>
+            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;">Quick Presets</p>
             <div style="display:flex;gap:7px;flex-wrap:wrap;">
-                <button class="preset-btn" onclick="loadPreset('conti')">Conti Crypter</button>
+                <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
                 <button class="preset-btn" onclick="loadPreset('lockbit')">LockBit Affiliate</button>
                 <button class="preset-btn" onclick="loadPreset('clean')">Zero-Match Post</button>
             </div>
         </div>
 
-        <div id="interceptError" style="display:none;color:#ef4444;font-size:11px;margin-bottom:10px;padding:8px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:5px;"></div>
+        <div id="interceptError" style="display:none;color:#a56b64;font-size:11px;margin-bottom:10px;padding:8px 10px;background:rgba(165, 107, 100,0.08);border:1px solid rgba(165, 107, 100,0.2);border-radius:5px;"></div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;">
             <button onclick="closeInterceptModal()" style="font-size:12px;padding:7px 16px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#475569;cursor:pointer;">Cancel</button>
-            <button id="interceptSubmitBtn" onclick="submitIntercept()" style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;border:1px solid rgba(34,211,238,0.4);background:rgba(34,211,238,0.1);color:#22d3ee;cursor:pointer;">⚡ Analyze &amp; Correlate</button>
+            <button id="interceptSubmitBtn" onclick="submitIntercept()" style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.4);background:rgba(125, 155, 176,0.1);color:#7d9bb0;cursor:pointer;">⚡ Analyze &amp; Correlate</button>
         </div>
     </div>
 </div>
@@ -499,12 +496,12 @@ function bootLoadFeeds() {
         document.getElementById('stats-badge').style.display = '';
         renderList(globalData);
     }).catch(err => {
-        document.getElementById('targets').innerHTML = `<div style="color:#ef4444;font-size:11px;text-align:center;padding:12px;">Failed to reach API server.</div>`;
+        document.getElementById('targets').innerHTML = `<div style="color:#a56b64;font-size:11px;text-align:center;padding:12px;">Failed to reach API server.</div>`;
     });
 }
 bootLoadFeeds();
 
-// export (CSV / JSON / Report)
+// ── Export (CSV / JSON / Report) ────────────────────────────────────────
 async function exportResults(fmt) {
     const start = document.getElementById('timelineStart').value;
     const end = document.getElementById('timelineEnd').value;
@@ -529,7 +526,7 @@ async function exportResults(fmt) {
     }
 }
 
-// timeline filter
+// ── Timeline Filter ──────────────────────────────────────────────────────
 function applyTimelineFilter() {
     const start = document.getElementById('timelineStart').value;
     const end = document.getElementById('timelineEnd').value;
@@ -553,7 +550,7 @@ function clearTimelineFilter() {
     bootLoadFeeds();
 }
 
-// advanced correlation: Infra Scan + Persona Link
+// ── Advanced Correlation: Infra Scan + Persona Link ─────────────────────
 async function runInfraScan() {
     const onion = document.getElementById('infraOnionInput').value.trim();
     const out = document.getElementById('infraScanResult');
@@ -566,7 +563,7 @@ async function runInfraScan() {
             out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
         } else {
             const origin = d.likely_clearnet_origin || {};
-            out.innerHTML = `<span style="color:#10b981;">Confidence: ${d.confidence}%</span> · ` +
+            out.innerHTML = `<span style="color:#6a9a80;">Confidence: ${d.confidence}%</span> · ` +
                 `Banner: ${esc(d.indicators.default_service_banner || 'none')} · ` +
                 `SSL reuse: ${d.indicators.ssl_certificate_reused_on_clearnet.found ? esc(d.indicators.ssl_certificate_reused_on_clearnet.clearnet_domain) : 'none'} · ` +
                 `Likely origin: ${esc(origin.ip || 'unknown')}<br><span style="color:#475569;">${esc(d.note)}</span>`;
@@ -588,7 +585,7 @@ async function runPersonaLink() {
         if (d.status === 'no_data') {
             out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
         } else {
-            out.innerHTML = `<span style="color:#a855f7;">${d.migration_confidence}% migration confidence</span> · ${esc(d.verdict)}<br><span style="color:#475569;">${esc(d.note)}</span>`;
+            out.innerHTML = `<span style="color:#9483ab;">${d.migration_confidence}% migration confidence</span> · ${esc(d.verdict)}<br><span style="color:#475569;">${esc(d.note)}</span>`;
         }
     } catch (err) {
         out.textContent = 'Comparison request failed.';
@@ -597,7 +594,7 @@ async function runPersonaLink() {
 
 function esc(s) { const d = document.createElement('div'); d.appendChild(document.createTextNode(String(s))); return d.innerHTML; }
 function confColor(c) {
-    return c > 80 ? { fill: '#22c55e', glow: '#22c55e' } : c > 40 ? { fill: '#eab308', glow: '#ca8a04' } : { fill: '#ef4444', glow: '#ef4444' };
+    return c > 80 ? { fill: '#73977e', glow: '#73977e' } : c > 40 ? { fill: '#ab8a5a', glow: '#96793f' } : { fill: '#a56b64', glow: '#a56b64' };
 }
 
 function handleSearchInput(e) {
@@ -611,10 +608,10 @@ function handleSearchInput(e) {
 
     let type = "ALIAS / KEYWORD";
     let color = "#64748b";
-    if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "#3b82f6"; }
-    else if (val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) { type = "BTC WALLET"; color = "#eab308"; }
-    else if (val.startsWith('4') || val.startsWith('8')) { type = "MONERO (XMR)"; color = "#f97316"; }
-    else if (val.length === 76) { type = "TOX ID"; color = "#06b6d4"; }
+    if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "#7086a8"; }
+    else if (val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) { type = "BTC WALLET"; color = "#ab8a5a"; }
+    else if (val.startsWith('4') || val.startsWith('8')) { type = "MONERO (XMR)"; color = "#b28058"; }
+    else if (val.length === 76) { type = "TOX ID"; color = "#6f9299"; }
 
     badge.style.display = 'inline-block';
     badge.style.background = `${color}22`;
@@ -658,19 +655,19 @@ function renderList(threats) {
         const card = document.createElement('div');
         card.className = 'suspect-card';
         card.style.padding = '10px 11px';
-        const customBadge = t.is_custom ? `<span style="font-size:9px;font-weight:700;color:#22d3ee;border:1px solid rgba(34,211,238,0.4);padding:1px 5px;border-radius:3px;background:rgba(34,211,238,0.08);display:inline-block;margin-top:3px;">● LIVE INTERCEPT</span>` : '';
+        const customBadge = t.is_custom ? `<span style="font-size:9px;font-weight:700;color:#7d9bb0;border:1px solid rgba(125, 155, 176,0.4);padding:1px 5px;border-radius:3px;background:rgba(125, 155, 176,0.08);display:inline-block;margin-top:3px;">● LIVE INTERCEPT</span>` : '';
 
         card.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                 <div style="flex:1;min-width:0;padding-right:8px;">
                     <p style="font-size:12px;font-weight:600;color:#67e8f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.suspect_name)}</p>
-                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias: <span style="color:#f87171;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span></p>
+                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias: <span style="color:#c48f8a;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span></p>
                     ${customBadge}
                 </div>
                 <span style="font-size:10px;font-weight:700;color:${col.fill};border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;background:${col.fill}0d;">${c}%</span>
             </div>
             <div class="conf-bar">
-                <div class="conf-fill" style="width:${c}%;background:${col.fill};box-shadow:0 0 6px ${col.glow};"></div>
+                <div class="conf-fill" style="width:${c}%;background:${col.fill}"></div>
             </div>
         `;
         card.onclick = () => {
@@ -688,7 +685,7 @@ function renderMatrix(suspect, threat) {
     document.getElementById('matrixSuspectName').textContent = `${suspect.suspect_name} [${suspect.surface_platform}]`;
     const b = suspect.breakdown || {};
 
-    // prefilling advanced correlation inputs from context where possible.
+    // Prefill Advanced Correlation inputs from context where possible.
     const onionHit = threat && threat.extracted_indicators && threat.extracted_indicators.onion_urls
         ? threat.extracted_indicators.onion_urls[0] : '';
     document.getElementById('infraOnionInput').value = onionHit || '';
@@ -706,8 +703,8 @@ function renderMatrix(suspect, threat) {
         valElem.textContent = `${score}%`;
         barElem.style.width = `${Math.min((score / maxCap) * 100, 100)}%`;
 
-        if (score >= 80) { statElem.textContent = "CONFIRMED"; statElem.style.color = "#22c55e"; } 
-        else if (score > 0) { statElem.textContent = "MATCHED"; statElem.style.color = "#38bdf8"; } 
+        if (score >= 80) { statElem.textContent = "CONFIRMED"; statElem.style.color = "#73977e"; } 
+        else if (score > 0) { statElem.textContent = "MATCHED"; statElem.style.color = "#7d9bb0"; } 
         else { statElem.textContent = "NO MATCH"; statElem.style.color = "#64748b"; }
     };
 
@@ -735,11 +732,11 @@ function renderGraph(threat, suspect) {
     ];
 
     const CAT_DEFS = {
-        btc:   { id: 'N_CAT_BTC',   label: 'BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
-        email: { id: 'N_CAT_EMAIL', label: 'EMAIL', prefix: 'Email Match: ', color: 'email' },
+        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
+        email: { id: 'N_CAT_EMAIL', label: '✉ EMAIL', prefix: 'Email Match: ', color: 'email' },
         comms: { id: 'N_CAT_COMMS', label: 'COMMS', prefix: 'Comms Match: ', color: 'comms' },
         infra: { id: 'N_CAT_INFRA', label: 'INFRASTRUCTURE', prefix: 'Infrastructure Match: ', color: 'infra' },
-        stylo: { id: 'N_CAT_STYLO', label: 'STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
+        stylo: { id: 'N_CAT_STYLO', label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
     };
 
     const buckets = { btc: [], email: [], comms: [], infra: [], stylo: [] };
@@ -795,46 +792,46 @@ function renderGraph(threat, suspect) {
             {
                 selector: 'node[nt="identity"]',
                 style: {
-                    'background-color': '#16a34a', 'width': 48, 'height': 48, 'color': '#86efac',
+                    'background-color': '#5f7e69', 'width': 48, 'height': 48, 'color': '#b6cdbf',
                     'font-weight': 'bold', 'font-size': '11px', 'shadow-blur': 25,
-                    'shadow-color': '#22c55e', 'shadow-opacity': 0.8
+                    'shadow-color': '#73977e', 'shadow-opacity': 0.8
                 }
             },
             {
                 selector: 'node[nt="alias"]',
                 style: {
-                    'background-color': '#dc2626', 'width': 42, 'height': 42, 'color': '#fca5a5',
-                    'font-weight': 'bold', 'shadow-blur': 20, 'shadow-color': '#ef4444', 'shadow-opacity': 0.7
+                    'background-color': '#8f544e', 'width': 42, 'height': 42, 'color': '#cf9f9a',
+                    'font-weight': 'bold', 'shadow-blur': 20, 'shadow-color': '#a56b64', 'shadow-opacity': 0.7
                 }
             },
             {
                 selector: 'node[nt="cat"]',
                 style: { 'width': 32, 'height': 32, 'font-size': '9px', 'font-weight': 'bold' }
             },
-            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#b45309', 'color': '#fde68a', 'shadow-blur': 16, 'shadow-color': '#eab308', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#1d4ed8', 'color': '#93c5fd', 'shadow-blur': 16, 'shadow-color': '#3b82f6', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="comms"]', style: { 'background-color': '#0e7490', 'color': '#67e8f9', 'shadow-blur': 16, 'shadow-color': '#06b6d4', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="infra"]', style: { 'background-color': '#047857', 'color': '#6ee7b7', 'shadow-blur': 16, 'shadow-color': '#10b981', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#6b21a8', 'color': '#d8b4fe', 'shadow-blur': 16, 'shadow-color': '#a855f7', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#7d6642', 'color': '#d9c9a3', 'shadow-blur': 16, 'shadow-color': '#ab8a5a', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#4d5f80', 'color': '#a9b8cc', 'shadow-blur': 16, 'shadow-color': '#7086a8', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="comms"]', style: { 'background-color': '#4f6a6f', 'color': '#67e8f9', 'shadow-blur': 16, 'shadow-color': '#6f9299', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="infra"]', style: { 'background-color': '#4c7060', 'color': '#a9c9b7', 'shadow-blur': 16, 'shadow-color': '#6a9a80', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#564a68', 'color': '#c3b6cf', 'shadow-blur': 16, 'shadow-color': '#9483ab', 'shadow-opacity': 0.7 } },
 
             { selector: 'node[nt="indicator"]', style: { 'width': 13, 'height': 13, 'font-size': '9px', 'font-weight': '500' } },
-            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#d97706', 'color': '#fef08a' } },
-            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#2563eb', 'color': '#bfdbfe' } },
-            { selector: 'node[nt="indicator"][color="comms"]', style: { 'background-color': '#0891b2', 'color': '#a5f3fc' } },
-            { selector: 'node[nt="indicator"][color="infra"]', style: { 'background-color': '#059669', 'color': '#a7f3d0' } },
-            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#7e22ce', 'color': '#e9d5ff' } },
+            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#96784e', 'color': '#d9c9a3' } },
+            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#5f749a', 'color': '#c7d1de' } },
+            { selector: 'node[nt="indicator"][color="comms"]', style: { 'background-color': '#5c7d83', 'color': '#a5f3fc' } },
+            { selector: 'node[nt="indicator"][color="infra"]', style: { 'background-color': '#5a8871', 'color': '#c2d9cc' } },
+            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#6b5c80', 'color': '#d6cbdd' } },
 
             { selector: 'edge', style: { 'width': 1.2, 'line-color': '#1e293b', 'curve-style': 'bezier', 'opacity': 0.6 } },
             {
                 selector: 'edge[et="identifies"]',
-                style: { 'line-color': '#ef4444', 'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#ef4444', 'width': 2, 'opacity': 0.8 }
+                style: { 'line-color': '#a56b64', 'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#a56b64', 'width': 2, 'opacity': 0.8 }
             },
             { selector: 'edge[et="branch"]', style: { 'width': 1.8, 'opacity': 0.75 } },
-            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#eab308' } },
-            { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#3b82f6' } },
-            { selector: 'edge[et="branch"][color="comms"]', style: { 'line-color': '#06b6d4' } },
-            { selector: 'edge[et="branch"][color="infra"]', style: { 'line-color': '#10b981' } },
-            { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#a855f7' } },
+            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#ab8a5a' } },
+            { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#7086a8' } },
+            { selector: 'edge[et="branch"][color="comms"]', style: { 'line-color': '#6f9299' } },
+            { selector: 'edge[et="branch"][color="infra"]', style: { 'line-color': '#6a9a80' } },
+            { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#9483ab' } },
             { selector: 'edge[et="leaf"]', style: { 'width': 1.5, 'opacity': 0.45, 'line-style': 'dashed', 'line-color': '#64748b' } }
         ],
         layout: {
