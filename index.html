@@ -142,17 +142,25 @@
 <header style="padding:13px 24px;border-bottom:1px solid #0f172a;background:#080c14;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
     <div>
         <h1 style="font-size:18px;font-weight:700;color:#22d3ee;letter-spacing:-0.3px;">
-            ⬡ De-Anonymization Intelligence Platform
+            ⬡ DoxInt <3
         </h1>
         <p style="font-size:11px;color:#475569;margin-top:2px;">SIH · Dark Web Threat Intelligence Platform</p>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
         <div style="display:flex;align-items:center;gap:6px;">
             <div style="width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px #22c55e;"></div>
-            <span style="font-size:11px;color:#475569;">AuraDB Active</span>
+            <span style="font-size:11px;color:#475569;">made by 6chan | Active</span>
         </div>
         <div id="stats-badge" style="display:none;font-size:11px;color:#475569;padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
             <span id="stats-count">0</span> profiles analyzed
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;border:1px solid #1e293b;border-radius:6px;padding:2px;">
+            <button onclick="exportResults('csv')" title="Export current results as CSV"
+                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">CSV</button>
+            <button onclick="exportResults('json')" title="Export current results as JSON"
+                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">JSON</button>
+            <button onclick="exportResults('report')" title="Export a readable intelligence report"
+                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">Report</button>
         </div>
         <button onclick="openInterceptModal()"
                 style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);color:#22d3ee;cursor:pointer;">
@@ -171,6 +179,18 @@
                    style="width:100%;padding:8px 10px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;"
                    oninput="handleSearchInput(event)">
             <div id="queryBadge" style="display:none;margin-top:6px;font-size:10px;font-family:ui-monospace,monospace;padding:2px 8px;border-radius:4px;width:fit-content;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;padding:8px 9px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;">
+            <span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Timeline Filter</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+                <input id="timelineStart" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
+                <span style="color:#475569;font-size:10px;">→</span>
+                <input id="timelineEnd" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button onclick="applyTimelineFilter()" style="flex:1;font-size:10px;font-weight:600;padding:5px;border-radius:5px;border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.07);color:#22d3ee;cursor:pointer;">Apply</button>
+                <button onclick="clearTimelineFilter()" style="font-size:10px;padding:5px 8px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#64748b;cursor:pointer;">Clear</button>
+            </div>
         </div>
         <div id="targets" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-right:2px;"></div>
     </aside>
@@ -230,7 +250,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            ⛓ Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
+                            Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
                         </span>
                         <span id="mCryptoStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.3);">0%</span>
                     </div>
@@ -249,7 +269,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            ✉ Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
+                            Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
                         </span>
                         <span id="mEmailStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);">0%</span>
                     </div>
@@ -268,7 +288,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            💬 Encrypted Comms <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">[?]</span>
+                            Encrypted Comms <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">[?]</span>
                         </span>
                         <span id="mCommsStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);">0%</span>
                     </div>
@@ -287,7 +307,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            🌐 Dark Infrastructure <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">[?]</span>
+                            Dark Infrastructure <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">[?]</span>
                         </span>
                         <span id="mInfraStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">0%</span>
                     </div>
@@ -325,7 +345,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            🎭 Alias Correlation <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">[?]</span>
+                            Alias Correlation <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">[?]</span>
                         </span>
                         <span id="mAliasStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);">0%</span>
                     </div>
@@ -344,7 +364,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            🛡 Threat TTP Alignment <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">[?]</span>
+                            Threat TTP Alignment <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">[?]</span>
                         </span>
                         <span id="mTtpStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(14,165,233,0.1);color:#0ea5e9;border:1px solid rgba(14,165,233,0.3);">0%</span>
                     </div>
@@ -363,7 +383,7 @@
                 <div class="matrix-card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            🕒 Temporal Activity <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">[?]</span>
+                            Temporal Activity <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">[?]</span>
                         </span>
                         <span id="mTempStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(244,63,94,0.1);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">0%</span>
                     </div>
@@ -378,6 +398,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Advanced Correlation: Infra Misconfig + Persona Link (seeded demo endpoints) -->
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #0f172a;display:flex;gap:14px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:260px;">
+                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
+                        🌐 Infra Misconfig Scan <span class="info-tip" title="Checks a .onion address for exposed status pages, reused SSL certs, and banner leaks pointing to a clearnet origin. Seeded with demo records pending live scanner integration.">[?]</span>
+                    </span>
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <input id="infraOnionInput" type="text" placeholder="target.onion"
+                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
+                        <button onclick="runInfraScan()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(16,185,129,0.35);background:rgba(16,185,129,0.08);color:#10b981;cursor:pointer;">Scan</button>
+                    </div>
+                    <div id="infraScanResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
+                </div>
+                <div style="flex:1;min-width:260px;">
+                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">
+                        🎭 Persona Migration Check <span class="info-tip" title="Compares two surface aliases for stylometric overlap suggesting a rebrand/migration. Seeded with demo pairs pending a live stylometry model.">[?]</span>
+                    </span>
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <input id="personaAInput" type="text" placeholder="alias A"
+                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
+                        <input id="personaBInput" type="text" placeholder="alias B"
+                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
+                        <button onclick="runPersonaLink()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(168,85,247,0.35);background:rgba(168,85,247,0.08);color:#a855f7;cursor:pointer;">Check</button>
+                    </div>
+                    <div id="personaLinkResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
+                </div>
+            </div>
         </div>
     </section>
 </main>
@@ -387,7 +435,7 @@
     <div class="modal-box">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
             <div>
-                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">⚡ Live Intercept Analysis</h2>
+                <h2 style="font-size:15px;font-weight:700;color:#22d3ee;">Live Intercept Analysis</h2>
                 <p style="font-size:11px;color:#475569;margin-top:3px;">Submit unstructured text or upload a forensic file to trigger de-anonymization.</p>
             </div>
             <button onclick="closeInterceptModal()" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;">✕</button>
@@ -403,7 +451,7 @@
         <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput" style="display:none;" accept=".txt,.log,.json,.eml,.csv,.md" onchange="handleFileSelect(event)">
             <p style="font-size:11px;color:#94a3b8;">
-                📁 <span style="color:#22d3ee;font-weight:600;">Click to upload</span> or drag &amp; drop a file
+                <span style="color:#22d3ee;font-weight:600;">Click to upload</span> or drag &amp; drop a file
             </p>
             <p style="font-size:9px;color:#475569;margin-top:2px;">.txt · .log · .json · .eml · .csv · .md</p>
             <div id="fileInfoBadge" style="display:none;margin-top:7px;">
@@ -419,9 +467,9 @@
         <div style="margin-bottom:18px;">
             <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;text-transform:uppercase;">Quick Presets</p>
             <div style="display:flex;gap:7px;flex-wrap:wrap;">
-                <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
-                <button class="preset-btn" onclick="loadPreset('lockbit')">🔒 LockBit Affiliate</button>
-                <button class="preset-btn" onclick="loadPreset('clean')">✅ Zero-Match Post</button>
+                <button class="preset-btn" onclick="loadPreset('conti')">Conti Crypter</button>
+                <button class="preset-btn" onclick="loadPreset('lockbit')">LockBit Affiliate</button>
+                <button class="preset-btn" onclick="loadPreset('clean')">Zero-Match Post</button>
             </div>
         </div>
 
@@ -455,6 +503,97 @@ function bootLoadFeeds() {
     });
 }
 bootLoadFeeds();
+
+// export (CSV / JSON / Report)
+async function exportResults(fmt) {
+    const start = document.getElementById('timelineStart').value;
+    const end = document.getElementById('timelineEnd').value;
+    const params = new URLSearchParams();
+    if (start) params.set('start', start);
+    if (end) params.set('end', end);
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/export/${fmt}?${params.toString()}`);
+        if (!res.ok) throw new Error(`Export failed (${res.status})`);
+        const blob = await res.blob();
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="([^"]+)"/);
+        const filename = match ? match[1] : `threat_intel_export.${fmt === 'report' ? 'txt' : fmt}`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${fmt.toUpperCase()}`);
+    } catch (err) {
+        showToast('Export failed — check API connection');
+    }
+}
+
+// timeline filter
+function applyTimelineFilter() {
+    const start = document.getElementById('timelineStart').value;
+    const end = document.getElementById('timelineEnd').value;
+    const params = new URLSearchParams();
+    if (start) params.set('start', start);
+    if (end) params.set('end', end);
+    fetch(`${API_BASE}/api/v1/timeline?${params.toString()}`)
+        .then(r => r.json())
+        .then(data => {
+            globalData = data.results || [];
+            document.getElementById('stats-count').textContent = globalData.length;
+            renderList(globalData);
+            showToast(`Timeline: ${data.count} record(s) in range`);
+        })
+        .catch(() => showToast('Timeline query failed'));
+}
+
+function clearTimelineFilter() {
+    document.getElementById('timelineStart').value = '';
+    document.getElementById('timelineEnd').value = '';
+    bootLoadFeeds();
+}
+
+// advanced correlation: Infra Scan + Persona Link
+async function runInfraScan() {
+    const onion = document.getElementById('infraOnionInput').value.trim();
+    const out = document.getElementById('infraScanResult');
+    if (!onion) { out.textContent = 'Enter a .onion address first.'; return; }
+    out.textContent = 'Scanning…';
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/infra/scan?onion=${encodeURIComponent(onion)}`);
+        const d = await res.json();
+        if (d.status === 'no_data') {
+            out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
+        } else {
+            const origin = d.likely_clearnet_origin || {};
+            out.innerHTML = `<span style="color:#10b981;">Confidence: ${d.confidence}%</span> · ` +
+                `Banner: ${esc(d.indicators.default_service_banner || 'none')} · ` +
+                `SSL reuse: ${d.indicators.ssl_certificate_reused_on_clearnet.found ? esc(d.indicators.ssl_certificate_reused_on_clearnet.clearnet_domain) : 'none'} · ` +
+                `Likely origin: ${esc(origin.ip || 'unknown')}<br><span style="color:#475569;">${esc(d.note)}</span>`;
+        }
+    } catch (err) {
+        out.textContent = 'Scan request failed.';
+    }
+}
+
+async function runPersonaLink() {
+    const a = document.getElementById('personaAInput').value.trim();
+    const b = document.getElementById('personaBInput').value.trim();
+    const out = document.getElementById('personaLinkResult');
+    if (!a || !b) { out.textContent = 'Enter both aliases first.'; return; }
+    out.textContent = 'Comparing…';
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/persona/link?alias_a=${encodeURIComponent(a)}&alias_b=${encodeURIComponent(b)}`);
+        const d = await res.json();
+        if (d.status === 'no_data') {
+            out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
+        } else {
+            out.innerHTML = `<span style="color:#a855f7;">${d.migration_confidence}% migration confidence</span> · ${esc(d.verdict)}<br><span style="color:#475569;">${esc(d.note)}</span>`;
+        }
+    } catch (err) {
+        out.textContent = 'Comparison request failed.';
+    }
+}
 
 function esc(s) { const d = document.createElement('div'); d.appendChild(document.createTextNode(String(s))); return d.innerHTML; }
 function confColor(c) {
@@ -539,15 +678,24 @@ function renderList(threats) {
             card.classList.add('active');
             activeCard = card;
             renderGraph(t, s);
-            renderMatrix(s);
+            renderMatrix(s, t);
         };
         wrap.appendChild(card);
     });
 }
 
-function renderMatrix(suspect) {
+function renderMatrix(suspect, threat) {
     document.getElementById('matrixSuspectName').textContent = `${suspect.suspect_name} [${suspect.surface_platform}]`;
     const b = suspect.breakdown || {};
+
+    // prefilling advanced correlation inputs from context where possible.
+    const onionHit = threat && threat.extracted_indicators && threat.extracted_indicators.onion_urls
+        ? threat.extracted_indicators.onion_urls[0] : '';
+    document.getElementById('infraOnionInput').value = onionHit || '';
+    document.getElementById('infraScanResult').textContent = '';
+    document.getElementById('personaAInput').value = threat ? threat.darkweb_alias : '';
+    document.getElementById('personaBInput').value = '';
+    document.getElementById('personaLinkResult').textContent = '';
 
     const updateCard = (valId, barId, statusId, score, maxCap = 100) => {
         const valElem = document.getElementById(valId);
@@ -587,11 +735,11 @@ function renderGraph(threat, suspect) {
     ];
 
     const CAT_DEFS = {
-        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
-        email: { id: 'N_CAT_EMAIL', label: '✉ EMAIL', prefix: 'Email Match: ', color: 'email' },
-        comms: { id: 'N_CAT_COMMS', label: '💬 COMMS', prefix: 'Comms Match: ', color: 'comms' },
-        infra: { id: 'N_CAT_INFRA', label: '🌐 INFRASTRUCTURE', prefix: 'Infrastructure Match: ', color: 'infra' },
-        stylo: { id: 'N_CAT_STYLO', label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
+        btc:   { id: 'N_CAT_BTC',   label: 'BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
+        email: { id: 'N_CAT_EMAIL', label: 'EMAIL', prefix: 'Email Match: ', color: 'email' },
+        comms: { id: 'N_CAT_COMMS', label: 'COMMS', prefix: 'Comms Match: ', color: 'comms' },
+        infra: { id: 'N_CAT_INFRA', label: 'INFRASTRUCTURE', prefix: 'Infrastructure Match: ', color: 'infra' },
+        stylo: { id: 'N_CAT_STYLO', label: 'STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
     };
 
     const buckets = { btc: [], email: [], comms: [], infra: [], stylo: [] };
@@ -809,12 +957,12 @@ async function submitIntercept() {
 
         const firstCard = document.getElementById('targets').querySelector('.suspect-card');
         if (firstCard) firstCard.click();
-        showToast('⚡ Live Intercept Correlated Successfully');
+        showToast('Live Intercept Correlated Successfully');
     } catch (err) {
         errDiv.textContent = `Analysis failed: ${err.message}`;
         errDiv.style.display = 'block';
     } finally {
-        btn.textContent = '⚡ Analyze & Correlate';
+        btn.textContent = 'Analyze & Correlate';
         btn.disabled = false;
     }
 }
