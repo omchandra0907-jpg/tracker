@@ -5,18 +5,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from extractor import ThreatExtractor
 from correlator import CorrelationEngine
 from custom_routes import router as custom_router
+from intel_routes import router as intel_router
 
-app = FastAPI(title="Dark Web Threat Actor De-Anonymization API")
+app = FastAPI(title="DoxInt API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.include_router(custom_router)
+app.include_router(intel_router)
 
 extractor = ThreatExtractor()
 
@@ -42,11 +44,13 @@ def analyze_threats():
     for post in darkweb_posts:
         extracted_iocs = extractor.extract(post["content"])
         suspects = correlator.calculate_risk(extracted_iocs, post["content"])
-        
+
         intelligence_report.append({
             "darkweb_alias": post["author"],
             "extracted_indicators": extracted_iocs,
-            "deanonymization_results": suspects
+            "deanonymization_results": suspects,
+            "timestamp": post.get("timestamp"),
+            "is_custom": False,
         })
 
     return {
