@@ -1,12 +1,10 @@
 """
-intel_routes.py
-────────────────
 Analytical front-end support: timeline querying, CSV/JSON/report export,
 and two capability stubs (infrastructure misconfiguration correlation +
 persona/stylometric linkage) that are seeded with curated demo data for
-now. The response shapes here are the intended production contract —
+now... The response shapes here are the intended production contract
 swapping the seeded lookups for a live Tor-probing service and a real
-stylometry model later should not require changing this API surface.
+stylometry model later should not require changing this API surface. <3
 """
 
 import csv
@@ -20,7 +18,7 @@ from fastapi.responses import StreamingResponse, PlainTextResponse
 
 from extractor import ThreatExtractor
 from correlator import CorrelationEngine
-from custom_routes import _load_posts  # reuse the existing intercepted-feed store
+from custom_routes import _load_posts 
 
 router = APIRouter(prefix="/api/v1", tags=["Timeline & Export & Advanced Correlation"])
 
@@ -38,7 +36,7 @@ _onion_to_actor = {
 }
 
 
-# ── shared helpers ──────────────────────────────────────────────────────
+# shared helpers
 
 def _parse_dt(value: Optional[str]) -> Optional[datetime]:
     if not value:
@@ -91,7 +89,7 @@ def _filter_by_timeline(dataset: list, start: Optional[datetime], end: Optional[
     for item in dataset:
         ts = _parse_dt(item.get("timestamp")) if item.get("timestamp") else None
         if ts is None:
-            continue  # undated records are excluded once a range filter is applied
+            continue  
         if start and ts < start:
             continue
         if end and ts > end:
@@ -134,7 +132,7 @@ def _flatten_rows(dataset: list) -> list:
     return rows
 
 
-# ── 1. Timeline query ───────────────────────────────────────────────────
+# Timeline query
 
 @router.get("/timeline")
 def query_timeline(
@@ -158,7 +156,7 @@ def query_timeline(
     }
 
 
-# ── 2. Export (CSV / JSON / report) ─────────────────────────────────────
+# Export (CSV / JSON / report)
 
 @router.get("/export/{fmt}")
 def export_results(
@@ -199,7 +197,7 @@ def export_results(
             headers={"Content-Disposition": f'attachment; filename="threat_intel_export_{stamp}.csv"'},
         )
 
-    # fmt == "report": a readable plaintext summary
+
     lines = [
         "DARK WEB THREAT ACTOR DE-ANONYMIZATION — INTELLIGENCE REPORT",
         f"Generated: {stamp}",
@@ -224,13 +222,8 @@ def export_results(
     )
 
 
-# ── 3. Infrastructure misconfiguration correlation (seeded placeholder) ─
+# Infrastructure misconfiguration correlation (seeded placeholder)
 
-# Curated demo records only — NOT the result of live probing. Each entry
-# simulates what a real Tor-hidden-service misconfiguration scan would
-# surface (exposed status pages, reused SSL certs, banner leaks). Replace
-# this table with a live scanner (Tor client + cert-transparency lookups +
-# banner grabbing) before treating results as real intelligence.
 _INFRA_SEED = {
     "lockbitapt6vx57t3eeqjofwgcglmutr3a35nyzyvhdp3qq4weewrvqd.onion": {
         "exposed_server_status": True,
@@ -296,11 +289,8 @@ def infra_scan(onion: str = Query(..., description="Onion address to check for m
     }
 
 
-# ── 4. Persona / stylometric linkage (seeded placeholder) ──────────────
+# Persona / stylometric linkage (seeded placeholder)
 
-# Curated demo pairs only. A real version would compute embedding or
-# n-gram stylometric similarity between two corpora of posts. These
-# figures are illustrative and do not assert any real-world identity claim.
 _PERSONA_LINK_SEED = {
     frozenset({"Bentley", "LockBitSupp"}): {"stylometric_similarity": 41, "shared_ttps": ["escrow", "affiliate"], "migration_confidence": 37, "verdict": "Weak overlap — likely distinct personas"},
     frozenset({"Garnet", "Bravo"}): {"stylometric_similarity": 74, "shared_ttps": ["affiliate", "ransom", "payload"], "migration_confidence": 69, "verdict": "Plausible persona migration (rebrand pattern)"},
