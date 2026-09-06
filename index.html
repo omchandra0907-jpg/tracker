@@ -2,132 +2,843 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SIH Threat Intel Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>DoxInt · Threat Intelligence</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
     <style>
+        /* ── Catppuccin Mocha ─────────────────────────────────────────────── */
+        :root {
+            --base:    #1e1e2e;
+            --mantle:  #181825;
+            --crust:   #11111b;
+            --surface0:#313244;
+            --surface1:#45475a;
+            --surface2:#585b70;
+            --overlay0:#6c7086;
+            --overlay1:#7f849c;
+            --overlay2:#9399b2;
+            --text:    #cdd6f4;
+            --subtext1:#bac2de;
+            --subtext0:#a6adc8;
+            --blue:    #89b4fa;
+            --lavender:#b4befe;
+            --sapphire:#74c7ec;
+            --sky:     #89dceb;
+            --teal:    #94e2d5;
+            --green:   #a6e3a1;
+            --yellow:  #f9e2af;
+            --peach:   #fab387;
+            --maroon:  #eba0ac;
+            --red:     #f38ba8;
+            --mauve:   #cba6f7;
+            --pink:    #f5c2e7;
+            --flamingo:#f2cdcd;
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: #070a12;
-            color: #e2e8f0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--crust);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            line-height: 1.5;
         }
 
+        /* ── Scrollbars ───────────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+
+        /* ── Header ───────────────────────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 48px;
+            background: var(--mantle);
+            border-bottom: 1px solid var(--surface0);
+            flex-shrink: 0;
+            gap: 16px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-brand h1 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.2px;
+        }
+        .header-brand span {
+            font-size: 11px;
+            color: var(--overlay0);
+            padding: 2px 8px;
+            background: var(--surface0);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+        }
+        .status-label {
+            font-size: 11px;
+            color: var(--overlay0);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #stats-badge {
+            display: none;
+            font-size: 11px;
+            color: var(--overlay1);
+            padding: 3px 10px;
+            border: 1px solid var(--surface0);
+            border-radius: 20px;
+            background: var(--surface0);
+            white-space: nowrap;
+        }
+
+        .export-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .export-group button {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--subtext0);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .export-group button:hover { background: var(--surface0); color: var(--text); }
+        .export-group button + button { border-left: 1px solid var(--surface0); }
+
+        .btn-intercept {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--blue);
+            background: transparent;
+            color: var(--blue);
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .btn-intercept:hover { background: rgba(137, 180, 250, 0.1); }
+
+        /* ── Layout ───────────────────────────────────────────────────────── */
+        main { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── Sidebar ──────────────────────────────────────────────────────── */
+        aside {
+            width: 300px;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--surface0);
+            background: var(--mantle);
+            overflow: hidden;
+        }
+
+        .sidebar-top {
+            padding: 12px;
+            border-bottom: 1px solid var(--surface0);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .search-wrap {
+            position: relative;
+        }
+        .search-wrap svg {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--overlay0);
+            pointer-events: none;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 7px 10px 7px 32px;
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        #searchInput:focus { border-color: var(--blue); }
+        #searchInput::placeholder { color: var(--overlay0); }
+
+        #queryBadge {
+            display: none;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        /* Timeline filter */
+        .filter-block {
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .filter-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--overlay0);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .filter-row { display: flex; gap: 6px; align-items: center; }
+        .filter-sep { font-size: 11px; color: var(--overlay0); }
+        input[type="date"] {
+            flex: 1;
+            min-width: 0;
+            padding: 5px 6px;
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            border-radius: 5px;
+            color: var(--subtext1);
+            font-size: 11px;
+            outline: none;
+            color-scheme: dark;
+        }
+        input[type="date"]:focus { border-color: var(--blue); }
+        .filter-actions { display: flex; gap: 6px; }
+        .btn-apply {
+            flex: 1;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid var(--blue);
+            background: transparent;
+            color: var(--blue);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-apply:hover { background: rgba(137,180,250,0.1); }
+        .btn-clear {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--surface1);
+            background: transparent;
+            color: var(--overlay0);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-clear:hover { background: var(--surface0); color: var(--subtext0); }
+
+        /* Targets list */
+        .sidebar-list-label {
+            padding: 8px 12px 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--overlay0);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+        #targets {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 0 8px 10px;
+        }
+
+        /* Suspect cards */
+        .suspect-card {
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            border-radius: 6px;
+            padding: 9px 10px;
+            transition: background 0.12s, border-color 0.12s;
+        }
+        .suspect-card:hover {
+            background: var(--surface0);
+            border-color: var(--surface1);
+        }
+        .suspect-card.active {
+            background: var(--base);
+            border-color: var(--blue);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+        .card-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+        }
+        .conf-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            font-family: ui-monospace, monospace;
+        }
+        .card-alias {
+            font-size: 10px;
+            color: var(--overlay0);
+            margin-top: 2px;
+            font-family: ui-monospace, monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .card-alias em { color: var(--peach); font-style: normal; }
+        .conf-bar {
+            height: 2px;
+            background: var(--surface0);
+            border-radius: 1px;
+            overflow: hidden;
+            margin-top: 7px;
+        }
+        .conf-fill { height: 100%; border-radius: 1px; transition: width 0.3s; }
+        .live-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--blue);
+            border: 1px solid rgba(137,180,250,0.35);
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(137,180,250,0.08);
+            margin-top: 4px;
+        }
+
+        /* ── Right panel ──────────────────────────────────────────────────── */
+        section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            background: var(--crust);
+        }
+
+        /* Graph bar */
+        .graph-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            height: 38px;
+            background: var(--mantle);
+            border-bottom: 1px solid var(--surface0);
+            flex-shrink: 0;
+            gap: 12px;
+        }
+        .graph-bar-left { display: flex; align-items: center; gap: 10px; }
+        .graph-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--subtext0);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        #activeTargetLabel {
+            display: none;
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--surface0);
+            border-radius: 4px;
+            color: var(--blue);
+            font-family: ui-monospace, monospace;
+        }
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            color: var(--overlay0);
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .ldot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* Graph area */
         #cy {
             width: 100%;
             height: 52%;
-            background-color: #070a12;
-            background-image: radial-gradient(ellipse 65% 55% at 50% 50%, rgba(125, 155, 176, 0.035) 0%, transparent 75%);
+            background: var(--crust);
+            flex-shrink: 0;
+        }
+        .empty-graph {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 10px;
+            color: var(--surface2);
+            font-size: 12px;
+            user-select: none;
         }
 
-        .suspect-card {
+        /* Graph zoom controls */
+        .graph-controls {
+            position: absolute;
+            top: 48px;
+            right: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 20;
+        }
+        .graph-ctrl-btn {
+            width: 26px;
+            height: 26px;
+            background: var(--mantle);
+            border: 1px solid var(--surface0);
+            color: var(--overlay1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.18s ease;
-            border: 1px solid #1e293b;
-            background: rgba(13, 20, 36, 0.75);
-            border-radius: 7px;
+            transition: border-color 0.12s, color 0.12s;
         }
-        .suspect-card:hover {
-            border-color: rgba(125, 155, 176, 0.4);
-            transform: translateY(-1px);
+        .graph-ctrl-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* ── Evidence Matrix ──────────────────────────────────────────────── */
+        #matrixPanel {
+            flex: 1;
+            border-top: 1px solid var(--surface0);
+            background: var(--mantle);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .suspect-card.active {
-            border-color: #7d9bb0;
-            background: rgba(15, 23, 42, 0.95);
+        .matrix-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
-        .conf-bar { height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; margin-top: 7px; }
-        .conf-fill { height: 100%; border-radius: 2px; }
-        .ldot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .matrix-header-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--overlay0);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        #matrixSuspectName {
+            font-size: 11px;
+            color: var(--blue);
+            font-family: ui-monospace, monospace;
+        }
 
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             overflow-y: auto;
-            padding: 4px 6px 14px 4px;
+            padding-bottom: 4px;
             align-content: start;
+            flex: 1;
         }
+
         .matrix-card {
-            background: #0d1424;
-            border: 1px solid #1e293b;
-            border-radius: 8px;
-            padding: 10px 14px;
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            padding: 10px 12px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            gap: 8px;
+            transition: border-color 0.15s;
         }
-        .matrix-card:hover { border-color: rgba(125, 155, 176, 0.25); }
+        .matrix-card:hover { border-color: var(--surface1); }
+
+        .matrix-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .matrix-card-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--subtext0);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .mstatus {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-family: ui-monospace, monospace;
+        }
+
+        .matrix-card-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .matrix-bar-track {
+            flex: 1;
+            height: 3px;
+            background: var(--surface0);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .matrix-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.35s ease;
+        }
+        .matrix-val {
+            font-size: 10px;
+            font-weight: 700;
+            font-family: ui-monospace, monospace;
+            min-width: 28px;
+            text-align: right;
+        }
 
         .info-tip {
             display: inline-flex;
             justify-content: center;
             align-items: center;
+            width: 14px;
+            height: 14px;
             font-size: 9px;
             font-weight: bold;
-            color: #94a3b8;
-            background: #1e293b;
-            border-radius: 4px;
-            padding: 0 4px;
-            margin-left: 6px;
+            color: var(--overlay0);
+            background: var(--surface0);
+            border-radius: 3px;
             cursor: help;
+            flex-shrink: 0;
         }
-        .info-tip:hover { color: #7d9bb0; background: #0f172a; border: 1px solid #7d9bb0; }
+        .info-tip:hover { color: var(--blue); background: var(--surface1); }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #080c14; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-
-        .graph-ctrl-btn {
-            background: #0e1626; border: 1px solid #1e293b; color: #94a3b8; border-radius: 5px;
-            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-            font-size: 14px; cursor: pointer; transition: all 0.15s;
+        /* ── Advanced Correlation Panel ───────────────────────────────────── */
+        .adv-panel {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--surface0);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
         }
-        .graph-ctrl-btn:hover { border-color: #7d9bb0; color: #7d9bb0; background: #131e33; }
+        .adv-block { flex: 1; min-width: 240px; }
+        .adv-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--overlay0);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .adv-inputs {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .adv-input {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 8px;
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 5px;
+            color: var(--subtext1);
+            font-size: 11px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .adv-input:focus { border-color: var(--blue); }
+        .adv-input::placeholder { color: var(--overlay0); }
+        .adv-btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .adv-btn-green {
+            border: 1px solid var(--teal);
+            background: transparent;
+            color: var(--teal);
+        }
+        .adv-btn-green:hover { background: rgba(148,226,213,0.08); }
+        .adv-btn-mauve {
+            border: 1px solid var(--mauve);
+            background: transparent;
+            color: var(--mauve);
+        }
+        .adv-btn-mauve:hover { background: rgba(203,166,247,0.08); }
+        .adv-result {
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--overlay1);
+            font-family: ui-monospace, monospace;
+            min-height: 14px;
+        }
 
+        /* ── Tooltip ──────────────────────────────────────────────────────── */
         #cy-tooltip {
-            position: fixed; padding: 5px 11px; background: #0e1420; border: 1px solid #334155;
-            border-radius: 6px; font-size: 11px; font-family: ui-monospace, monospace;
-            color: #94a3b8; pointer-events: none; display: none; z-index: 9999;
-            max-width: 320px; word-break: break-all; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            position: fixed;
+            padding: 4px 10px;
+            background: var(--mantle);
+            border: 1px solid var(--surface1);
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: ui-monospace, monospace;
+            color: var(--subtext1);
+            pointer-events: none;
+            display: none;
+            z-index: 9999;
+            max-width: 300px;
+            word-break: break-all;
         }
+
+        /* ── Modal ────────────────────────────────────────────────────────── */
         .modal-overlay {
-            position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: rgba(17, 17, 27, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .modal-box {
-            background: #0e1420; border: 1px solid #1e3a5f; border-radius: 10px;
-            width: 560px; max-width: 93vw; padding: 24px;
+            background: var(--mantle);
+            border: 1px solid var(--surface1);
+            border-radius: 10px;
+            width: 540px;
+            max-width: 94vw;
+            padding: 24px;
         }
-        .preset-btn {
-            font-size:10px; padding:4px 10px; border-radius:4px; border:1px solid #1e3a5f;
-            background:rgba(125, 155, 176,0.05); color:#7d9bb0; cursor:pointer; transition: all 0.15s;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
-        .preset-btn:hover { background:rgba(125, 155, 176,0.13); border-color:rgba(125, 155, 176,0.4); }
+        .modal-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .modal-sub {
+            font-size: 11px;
+            color: var(--overlay0);
+            margin-top: 3px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--overlay0);
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.12s;
+        }
+        .modal-close:hover { color: var(--text); }
+
+        .modal-field { margin-bottom: 14px; }
+        .modal-field label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--overlay0);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 12px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .modal-input:focus { border-color: var(--blue); }
+        .modal-input::placeholder { color: var(--overlay0); }
+
         .drop-zone {
-            border: 1px dashed #334155; border-radius: 6px;
-            padding: 14px; text-align: center; cursor: pointer;
-            background: rgba(8,12,20,0.6); margin-bottom: 10px;
+            border: 1px dashed var(--surface1);
+            border-radius: 6px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--base);
+            margin-bottom: 12px;
             transition: border-color 0.2s, background 0.2s;
         }
         .drop-zone:hover, .drop-zone.drag-over {
-            border-color: rgba(125, 155, 176,0.5);
-            background: rgba(125, 155, 176,0.04);
+            border-color: var(--blue);
+            background: rgba(137,180,250,0.04);
         }
+        .drop-zone-text { font-size: 11px; color: var(--subtext0); }
+        .drop-zone-text strong { color: var(--blue); font-weight: 600; }
+        .drop-zone-ext { font-size: 9px; color: var(--overlay0); margin-top: 3px; }
+        #fileInfoBadge { display: none; margin-top: 7px; }
+        #fileNameDisplay {
+            font-size: 10px;
+            color: var(--green);
+            background: rgba(166,227,161,0.08);
+            border: 1px solid rgba(166,227,161,0.25);
+            padding: 2px 9px;
+            border-radius: 4px;
+        }
+
         .intercept-textarea {
-            width:100%; height:136px; background:#080c14; border:1px solid #1e293b;
-            border-radius:6px; color:#e2e8f0; font-family:ui-monospace,monospace; font-size:11px;
-            padding:10px 12px; resize:vertical; outline:none; line-height:1.65;
+            width: 100%;
+            height: 120px;
+            background: var(--base);
+            border: 1px solid var(--surface0);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 11px;
+            padding: 10px 12px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.6;
+            transition: border-color 0.15s;
         }
+        .intercept-textarea:focus { border-color: var(--blue); }
+        .intercept-textarea::placeholder { color: var(--overlay0); }
+
+        .presets-label {
+            font-size: 10px;
+            color: var(--overlay0);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 7px;
+        }
+        .preset-btn {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--surface1);
+            background: var(--base);
+            color: var(--subtext0);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .preset-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+        #interceptError {
+            display: none;
+            color: var(--red);
+            font-size: 11px;
+            margin-bottom: 12px;
+            padding: 8px 10px;
+            background: rgba(243,139,168,0.07);
+            border: 1px solid rgba(243,139,168,0.2);
+            border-radius: 5px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .btn-cancel {
+            font-size: 12px;
+            padding: 7px 16px;
+            border-radius: 5px;
+            border: 1px solid var(--surface1);
+            background: transparent;
+            color: var(--overlay0);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .btn-cancel:hover { background: var(--surface0); color: var(--subtext0); }
+        .btn-submit {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 5px;
+            border: 1px solid var(--blue);
+            background: transparent;
+            color: var(--blue);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .btn-submit:hover { background: rgba(137,180,250,0.1); }
+
+        /* ── Toast ────────────────────────────────────────────────────────── */
         .intercept-toast {
-            position:fixed; bottom:24px; right:24px; z-index:600; padding:10px 16px;
-            border-radius:7px; font-size:12px; font-weight:600; background:#0e1420;
-            border:1px solid rgba(125, 155, 176,0.35); color:#7d9bb0
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 600;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--mantle);
+            border: 1px solid var(--surface1);
+            color: var(--subtext1);
         }
     </style>
 </head>
@@ -136,345 +847,316 @@
 <div id="cy-tooltip"></div>
 
 <!-- Top Bar -->
-<header style="padding:13px 24px;border-bottom:1px solid #0f172a;background:#080c14;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-    <div>
-        <h1 style="font-size:18px;font-weight:700;color:#7d9bb0;letter-spacing:-0.3px;">
-            ⬡ DoxInt
-        </h1>
-        <p style="font-size:11px;color:#475569;margin-top:2px;">SIH · Dark Web Threat Intelligence Platform</p>
+<header>
+    <div class="header-brand">
+        <h1>DoxInt</h1>
+        <span>SIH · Threat Intel</span>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-            <div style="width:7px;height:7px;border-radius:50%;background:#73977e;"></div>
-            <span style="font-size:11px;color:#475569;">made by 6chan | Active</span>
+    <div class="header-right">
+        <div class="status-label">
+            <div class="status-dot"></div>
+            made by 6chan · Active
         </div>
-        <div id="stats-badge" style="display:none;font-size:11px;color:#475569;padding:3px 10px;border:1px solid #1e293b;border-radius:20px;background:#0e1420;">
-            <span id="stats-count">0</span> profiles analyzed
+        <div id="stats-badge"><span id="stats-count">0</span> profiles</div>
+        <div class="export-group">
+            <button onclick="exportResults('csv')" title="Export CSV">CSV</button>
+            <button onclick="exportResults('json')" title="Export JSON">JSON</button>
+            <button onclick="exportResults('report')" title="Export Report">Report</button>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;border:1px solid #1e293b;border-radius:6px;padding:2px;">
-            <button onclick="exportResults('csv')" title="Export current results as CSV"
-                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">CSV</button>
-            <button onclick="exportResults('json')" title="Export current results as JSON"
-                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">JSON</button>
-            <button onclick="exportResults('report')" title="Export a readable intelligence report"
-                    style="font-size:10px;font-weight:600;padding:4px 9px;border-radius:4px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">Report</button>
-        </div>
-        <button onclick="openInterceptModal()"
-                style="font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.35);background:rgba(125, 155, 176,0.07);color:#7d9bb0;cursor:pointer;">
-            + Intercept Raw Post
-        </button>
+        <button class="btn-intercept" onclick="openInterceptModal()">+ Intercept Post</button>
     </div>
 </header>
 
 <!-- Main Workspace -->
-<main style="display:flex;flex:1;overflow:hidden;">
+<main>
 
     <!-- Left: Search & Suspect List -->
-    <aside style="width:315px;min-width:315px;display:flex;flex-direction:column;border-right:1px solid #0f172a;padding:14px 12px;gap:10px;background:#080c14;">
-        <div>
-            <input id="searchInput" type="text" placeholder="Search Wallet, Email, or Alias…"
-                   style="width:100%;padding:8px 10px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;"
-                   oninput="handleSearchInput(event)">
-            <div id="queryBadge" style="display:none;margin-top:6px;font-size:10px;font-family:ui-monospace,monospace;padding:2px 8px;border-radius:4px;width:fit-content;"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;padding:8px 9px;background:#0d1424;border:1px solid #1e293b;border-radius:6px;">
-            <span style="font-size:9px;font-weight:700;color:#64748b;">Timeline Filter</span>
-            <div style="display:flex;gap:6px;align-items:center;">
-                <input id="timelineStart" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
-                <span style="color:#475569;font-size:10px;">→</span>
-                <input id="timelineEnd" type="date" style="flex:1;min-width:0;padding:5px 6px;background:#080c14;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:10px;">
+    <aside>
+        <div class="sidebar-top">
+            <div class="search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input id="searchInput" type="text" placeholder="Wallet, email, alias…" oninput="handleSearchInput(event)">
             </div>
-            <div style="display:flex;gap:6px;">
-                <button onclick="applyTimelineFilter()" style="flex:1;font-size:10px;font-weight:600;padding:5px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.35);background:rgba(125, 155, 176,0.07);color:#7d9bb0;cursor:pointer;">Apply</button>
-                <button onclick="clearTimelineFilter()" style="font-size:10px;padding:5px 8px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#64748b;cursor:pointer;">Clear</button>
+            <div id="queryBadge"></div>
+
+            <div class="filter-block">
+                <div class="filter-label">Timeline Filter</div>
+                <div class="filter-row">
+                    <input id="timelineStart" type="date">
+                    <span class="filter-sep">→</span>
+                    <input id="timelineEnd" type="date">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-apply" onclick="applyTimelineFilter()">Apply</button>
+                    <button class="btn-clear" onclick="clearTimelineFilter()">Clear</button>
+                </div>
             </div>
         </div>
-        <div id="targets" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-right:2px;"></div>
+
+        <div class="sidebar-list-label">Intelligence Feed</div>
+        <div id="targets"></div>
     </aside>
 
-    <!-- Right: Visualizer & Factor Matrix -->
-    <section style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
+    <!-- Right: Graph + Matrix -->
+    <section>
 
-        <!-- Graph Header & Legend -->
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid #0f172a;background:#0a0f1d;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:12px;font-weight:600;color:#94a3b8;">Entity Relationship Graph</span>
-                <span id="activeTargetLabel" style="display:none;font-size:10px;padding:2px 8px;background:rgba(125, 155, 176,0.08);border:1px solid rgba(125, 155, 176,0.25);border-radius:20px;color:#7d9bb0;"></span>
+        <!-- Graph Header -->
+        <div class="graph-bar">
+            <div class="graph-bar-left">
+                <span class="graph-title">Entity Graph</span>
+                <span id="activeTargetLabel"></span>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;font-size:10px;color:#475569;">
-                <span><span class="ldot" style="background:#73977e;"></span> Target</span>
-                <span><span class="ldot" style="background:#a56b64;"></span> Alias</span>
-                <span><span class="ldot" style="background:#ab8a5a;"></span> Crypto</span>
-                <span><span class="ldot" style="background:#7086a8;"></span> Email</span>
-                <span><span class="ldot" style="background:#6f9299;"></span> Comms</span>
-                <span><span class="ldot" style="background:#9483ab;"></span> Stylometry</span>
-                <span><span class="ldot" style="background:#6a9a80;"></span> Infrastructure</span>
+            <div class="legend">
+                <span class="legend-item"><span class="ldot" style="background:#a6e3a1"></span>Target</span>
+                <span class="legend-item"><span class="ldot" style="background:#f38ba8"></span>Alias</span>
+                <span class="legend-item"><span class="ldot" style="background:#f9e2af"></span>Crypto</span>
+                <span class="legend-item"><span class="ldot" style="background:#89b4fa"></span>Email</span>
+                <span class="legend-item"><span class="ldot" style="background:#89dceb"></span>Comms</span>
+                <span class="legend-item"><span class="ldot" style="background:#cba6f7"></span>Stylometry</span>
+                <span class="legend-item"><span class="ldot" style="background:#94e2d5"></span>Infra</span>
             </div>
         </div>
 
         <!-- Graph Container -->
-        <div id="cy" style="position:relative;">
-            <div class="empty-graph" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:#334155;font-size:13px;user-select:none;">
-                <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.2">
+        <div id="cy">
+            <div class="empty-graph">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
                     <circle cx="12" cy="12" r="3.2"/><circle cx="3.5" cy="6" r="2"/><circle cx="20.5" cy="6" r="2"/>
                     <circle cx="3.5" cy="18" r="2"/><circle cx="20.5" cy="18" r="2"/>
                     <line x1="11" y1="9.5" x2="5" y2="7"/><line x1="13" y1="9.5" x2="19" y2="7"/>
                 </svg>
-                <span>Select a profile from the intelligence feed to explore the graph</span>
+                <span>Select a profile to explore the entity graph</span>
             </div>
         </div>
 
-        <!-- Floating Zoom Controls -->
-        <div style="position:absolute;top:50px;right:18px;display:flex;flex-direction:column;gap:5px;z-index:20;">
+        <!-- Graph Zoom Controls -->
+        <div class="graph-controls">
             <button class="graph-ctrl-btn" title="Zoom In" onclick="if(cy) cy.zoom(cy.zoom() * 1.25)">+</button>
             <button class="graph-ctrl-btn" title="Zoom Out" onclick="if(cy) cy.zoom(cy.zoom() * 0.8)">−</button>
-            <button class="graph-ctrl-btn" title="Reset View" onclick="if(cy) cy.fit(undefined, 40)">⤢</button>
+            <button class="graph-ctrl-btn" title="Fit View" onclick="if(cy) cy.fit(undefined, 40)">⤢</button>
         </div>
 
-        <!-- Evidence Breakdown Matrix (2-Column Grid) -->
-        <div id="matrixPanel" style="flex:1;border-top:1px solid #0f172a;background:#080c14;padding:12px 20px;display:flex;flex-direction:column;overflow:hidden;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0;">
-                <span style="font-size:11px;font-weight:700;color:#64748b;">
-                    Multi-Vector Attribution Matrix (8 Evidence Criteria)
-                </span>
-                <span id="matrixSuspectName" style="font-size:11px;color:#7d9bb0;font-family:ui-monospace,monospace;">
-                    No Target Selected
-                </span>
+        <!-- Evidence Breakdown Matrix -->
+        <div id="matrixPanel">
+            <div class="matrix-header">
+                <span class="matrix-header-title">Attribution Matrix — 8 Evidence Vectors</span>
+                <span id="matrixSuspectName">No target selected</span>
             </div>
 
             <div class="matrix-grid">
                 <!-- 1. Crypto -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            ⛓ Crypto Networks <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            ⛓ Crypto
+                            <span class="info-tip" title="Deterministic proof of address reuse. Matches BTC, XMR, and USDT wallets to known operators.">?</span>
                         </span>
-                        <span id="mCryptoStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(171, 138, 90,0.1);color:#ab8a5a;border:1px solid rgba(171, 138, 90,0.3);">0%</span>
+                        <span id="mCryptoStatus" class="mstatus" style="color:#f9e2af;background:rgba(249,226,175,0.08);border:1px solid rgba(249,226,175,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mCryptoVal" style="font-weight:700;color:#ab8a5a;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mCryptoBar" class="matrix-bar-fill" style="width:0%;background:#f9e2af;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCryptoBar" style="height:100%;width:0%;background:#ab8a5a;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mCryptoVal" class="matrix-val" style="color:#f9e2af;display:none">0%</span>
                     </div>
                 </div>
 
                 <!-- 2. Email -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            ✉ Email Selectors <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            ✉ Email
+                            <span class="info-tip" title="Correlation of burner and cleared email addresses used for negotiations, forum registrations, or payments.">?</span>
                         </span>
-                        <span id="mEmailStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(112, 134, 168,0.1);color:#7086a8;border:1px solid rgba(112, 134, 168,0.3);">0%</span>
+                        <span id="mEmailStatus" class="mstatus" style="color:#89b4fa;background:rgba(137,180,250,0.08);border:1px solid rgba(137,180,250,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mEmailVal" style="font-weight:700;color:#7086a8;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mEmailBar" class="matrix-bar-fill" style="width:0%;background:#89b4fa;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mEmailBar" style="height:100%;width:0%;background:#7086a8;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mEmailVal" class="matrix-val" style="color:#89b4fa;display:none">0%</span>
                     </div>
                 </div>
 
                 <!-- 3. Comms -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Encrypted Comms <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            Comms
+                            <span class="info-tip" title="Direct mapping of end-to-end encrypted handles (Tox IDs, Jabber/XMPP profiles, Session, Telegram).">?</span>
                         </span>
-                        <span id="mCommsStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(111, 146, 153,0.1);color:#6f9299;border:1px solid rgba(111, 146, 153,0.3);">0%</span>
+                        <span id="mCommsStatus" class="mstatus" style="color:#89dceb;background:rgba(137,220,235,0.08);border:1px solid rgba(137,220,235,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mCommsVal" style="font-weight:700;color:#6f9299;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mCommsBar" class="matrix-bar-fill" style="width:0%;background:#89dceb;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCommsBar" style="height:100%;width:0%;background:#6f9299;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mCommsVal" class="matrix-val" style="color:#89dceb;display:none">0%</span>
                     </div>
                 </div>
 
                 <!-- 4. Infrastructure -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Dark Infrastructure <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            Infra
+                            <span class="info-tip" title="Identification of operational vanity URLs (.onion mirrors), C2 servers, and bulletproof hosting networks.">?</span>
                         </span>
-                        <span id="mInfraStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(106, 154, 128,0.1);color:#6a9a80;border:1px solid rgba(106, 154, 128,0.3);">0%</span>
+                        <span id="mInfraStatus" class="mstatus" style="color:#94e2d5;background:rgba(148,226,213,0.08);border:1px solid rgba(148,226,213,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mInfraVal" style="font-weight:700;color:#6a9a80;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mInfraBar" class="matrix-bar-fill" style="width:0%;background:#94e2d5;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mInfraBar" style="height:100%;width:0%;background:#6a9a80;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mInfraVal" class="matrix-val" style="color:#94e2d5;display:none">0%</span>
                     </div>
                 </div>
 
                 <!-- 5. Stylometry -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Stylometry / Slang <span class="info-tip" title="Linguistic behavioral profiling based on unique underground forum slang, grammar quirks, and vocabulary. (Capped at 30% to prevent false positives).">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            Stylometry
+                            <span class="info-tip" title="Linguistic behavioral profiling based on unique underground forum slang, grammar quirks, and vocabulary. (Capped at 30% to prevent false positives).">?</span>
                         </span>
-                        <span id="mStyloStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(148, 131, 171,0.1);color:#9483ab;border:1px solid rgba(148, 131, 171,0.3);">0%</span>
+                        <span id="mStyloStatus" class="mstatus" style="color:#cba6f7;background:rgba(203,166,247,0.08);border:1px solid rgba(203,166,247,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight (Max 30%)</span>
-                            <span id="mStyloVal" style="font-weight:700;color:#9483ab;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mStyloBar" class="matrix-bar-fill" style="width:0%;background:#cba6f7;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mStyloBar" style="height:100%;width:0%;background:#9483ab;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mStyloVal" class="matrix-val" style="color:#cba6f7;display:none">0%</span>
                     </div>
                 </div>
 
-                <!-- 6. Alias Cross-Match -->
+                <!-- 6. Alias -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Alias Correlation <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            Alias
+                            <span class="info-tip" title="Cross-forum username mapping matching surface web handles to deep web personas.">?</span>
                         </span>
-                        <span id="mAliasStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(165, 107, 100,0.1);color:#a56b64;border:1px solid rgba(165, 107, 100,0.3);">0%</span>
+                        <span id="mAliasStatus" class="mstatus" style="color:#f38ba8;background:rgba(243,139,168,0.08);border:1px solid rgba(243,139,168,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mAliasVal" style="font-weight:700;color:#a56b64;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mAliasBar" class="matrix-bar-fill" style="width:0%;background:#f38ba8;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mAliasBar" style="height:100%;width:0%;background:#a56b64;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mAliasVal" class="matrix-val" style="color:#f38ba8;display:none">0%</span>
                     </div>
                 </div>
 
-                <!-- 7. TTPs / Role Profile -->
+                <!-- 7. TTPs -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Threat TTP Alignment <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            TTPs
+                            <span class="info-tip" title="Tactics, Techniques, and Procedures indicating specific cybercrime roles (e.g., RaaS affiliate, Initial Access Broker, Crypter dev).">?</span>
                         </span>
-                        <span id="mTtpStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(125, 155, 176,0.1);color:#7d9bb0;border:1px solid rgba(125, 155, 176,0.3);">0%</span>
+                        <span id="mTtpStatus" class="mstatus" style="color:#74c7ec;background:rgba(116,199,236,0.08);border:1px solid rgba(116,199,236,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mTtpVal" style="font-weight:700;color:#7d9bb0;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mTtpBar" class="matrix-bar-fill" style="width:0%;background:#74c7ec;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTtpBar" style="height:100%;width:0%;background:#7d9bb0;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mTtpVal" class="matrix-val" style="color:#74c7ec;display:none">0%</span>
                     </div>
                 </div>
 
-                <!-- 8. Temporal / Timezone Activity -->
+                <!-- 8. Temporal -->
                 <div class="matrix-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-size:11px;font-weight:600;color:#cbd5e1;display:flex;align-items:center;">
-                            Temporal Activity <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">[?]</span>
+                    <div class="matrix-card-top">
+                        <span class="matrix-card-label">
+                            Temporal
+                            <span class="info-tip" title="Timezone mapping and active-hours correlation based on UTC posting schedules. Identifies physical operational regions.">?</span>
                         </span>
-                        <span id="mTempStatus" style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(156, 102, 114,0.1);color:#9c6672;border:1px solid rgba(156, 102, 114,0.3);">0%</span>
+                        <span id="mTempStatus" class="mstatus" style="color:#fab387;background:rgba(250,179,135,0.08);border:1px solid rgba(250,179,135,0.2)">—</span>
                     </div>
-                    <div>
-                        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px;">
-                            <span>Match Weight</span>
-                            <span id="mTempVal" style="font-weight:700;color:#9c6672;">0%</span>
+                    <div class="matrix-card-bar-row">
+                        <div class="matrix-bar-track">
+                            <div id="mTempBar" class="matrix-bar-fill" style="width:0%;background:#fab387;"></div>
                         </div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTempBar" style="height:100%;width:0%;background:#9c6672;transition:width 0.35s;"></div>
-                        </div>
+                        <span id="mTempVal" class="matrix-val" style="color:#fab387;display:none">0%</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Advanced Correlation: Infra Misconfig + Persona Link (seeded demo endpoints) -->
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #0f172a;display:flex;gap:14px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:260px;">
-                    <span style="font-size:10px;font-weight:700;color:#64748b;">
-                        Infra Misconfig Scan <span class="info-tip" title="Checks a .onion address for exposed status pages, reused SSL certs, and banner leaks pointing to a clearnet origin. Seeded with demo records pending live scanner integration.">[?]</span>
-                    </span>
-                    <div style="display:flex;gap:6px;margin-top:6px;">
-                        <input id="infraOnionInput" type="text" placeholder="target.onion"
-                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
-                        <button onclick="runInfraScan()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(106, 154, 128,0.35);background:rgba(106, 154, 128,0.08);color:#6a9a80;cursor:pointer;">Scan</button>
+            <!-- Advanced Correlation -->
+            <div class="adv-panel">
+                <div class="adv-block">
+                    <div class="adv-label">
+                        Infra Misconfig Scan
+                        <span class="info-tip" title="Checks a .onion address for exposed status pages, reused SSL certs, and banner leaks pointing to a clearnet origin.">?</span>
                     </div>
-                    <div id="infraScanResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
+                    <div class="adv-inputs">
+                        <input id="infraOnionInput" class="adv-input" type="text" placeholder="target.onion">
+                        <button class="adv-btn adv-btn-green" onclick="runInfraScan()">Scan</button>
+                    </div>
+                    <div id="infraScanResult" class="adv-result"></div>
                 </div>
-                <div style="flex:1;min-width:260px;">
-                    <span style="font-size:10px;font-weight:700;color:#64748b;">
-                        Persona Migration Check <span class="info-tip" title="Compares two surface aliases for stylometric overlap suggesting a rebrand/migration. Seeded with demo pairs pending a live stylometry model.">[?]</span>
-                    </span>
-                    <div style="display:flex;gap:6px;margin-top:6px;">
-                        <input id="personaAInput" type="text" placeholder="alias A"
-                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
-                        <input id="personaBInput" type="text" placeholder="alias B"
-                               style="flex:1;min-width:0;padding:6px 8px;background:#0d1424;border:1px solid #1e293b;border-radius:5px;color:#cbd5e1;font-size:11px;">
-                        <button onclick="runPersonaLink()" style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;border:1px solid rgba(148, 131, 171,0.35);background:rgba(148, 131, 171,0.08);color:#9483ab;cursor:pointer;">Check</button>
+                <div class="adv-block">
+                    <div class="adv-label">
+                        Persona Migration
+                        <span class="info-tip" title="Compares two surface aliases for stylometric overlap suggesting a rebrand/migration.">?</span>
                     </div>
-                    <div id="personaLinkResult" style="margin-top:7px;font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace;"></div>
+                    <div class="adv-inputs">
+                        <input id="personaAInput" class="adv-input" type="text" placeholder="alias A">
+                        <input id="personaBInput" class="adv-input" type="text" placeholder="alias B">
+                        <button class="adv-btn adv-btn-mauve" onclick="runPersonaLink()">Check</button>
+                    </div>
+                    <div id="personaLinkResult" class="adv-result"></div>
                 </div>
             </div>
         </div>
     </section>
 </main>
 
-<!-- Live Intercept Modal (Includes Teammate's Drag & Drop Zone) -->
+<!-- Live Intercept Modal -->
 <div id="interceptModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div class="modal-header">
             <div>
-                <h2 style="font-size:15px;font-weight:700;color:#7d9bb0;">Live Intercept Analysis</h2>
-                <p style="font-size:11px;color:#475569;margin-top:3px;">Submit unstructured text or upload a forensic file to trigger de-anonymization.</p>
+                <div class="modal-title">Live Intercept Analysis</div>
+                <div class="modal-sub">Submit unstructured text or upload a forensic file to trigger de-anonymization.</div>
             </div>
-            <button onclick="closeInterceptModal()" style="background:none;border:none;color:#475569;font-size:20px;cursor:pointer;">✕</button>
+            <button class="modal-close" onclick="closeInterceptModal()">✕</button>
         </div>
 
-        <div style="margin-bottom:12px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Source Handle / Forum Alias</label>
-            <input id="interceptAlias" type="text" placeholder="e.g. shadow_broker_99  (optional)"
-                   style="width:100%;padding:8px 10px;background:#080c14;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;font-size:12px;outline:none;">
+        <div class="modal-field">
+            <label>Source Handle / Forum Alias</label>
+            <input id="interceptAlias" class="modal-input" type="text" placeholder="e.g. shadow_broker_99  (optional)">
         </div>
 
-        <!-- Teammate's Drag and Drop Zone -->
         <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput" style="display:none;" accept=".txt,.log,.json,.eml,.csv,.md" onchange="handleFileSelect(event)">
-            <p style="font-size:11px;color:#94a3b8;">
-                 <span style="color:#7d9bb0;font-weight:600;">Click to upload</span> or drag &amp; drop a file
-            </p>
-            <p style="font-size:9px;color:#475569;margin-top:2px;">.txt · .log · .json · .eml · .csv · .md</p>
-            <div id="fileInfoBadge" style="display:none;margin-top:7px;">
-                <span id="fileNameDisplay" style="font-size:10px;color:#73977e;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);padding:2px 9px;border-radius:4px;"></span>
+            <p class="drop-zone-text"><strong>Click to upload</strong> or drag &amp; drop a file</p>
+            <p class="drop-zone-ext">.txt · .log · .json · .eml · .csv · .md</p>
+            <div id="fileInfoBadge">
+                <span id="fileNameDisplay"></span>
             </div>
         </div>
 
-        <div style="margin-bottom:14px;">
-            <label style="font-size:10px;font-weight:600;color:#64748b;display:block;margin-bottom:5px;">Raw Text Content *</label>
+        <div class="modal-field">
+            <label>Raw Text Content *</label>
             <textarea id="interceptContent" class="intercept-textarea" placeholder="Paste forum post, chat dump, or ransom note…"></textarea>
         </div>
 
-        <div style="margin-bottom:18px;">
-            <p style="font-size:10px;color:#334155;margin-bottom:7px;font-weight:600;">Quick Presets</p>
-            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        <div style="margin-bottom:16px;">
+            <div class="presets-label">Quick Presets</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <button class="preset-btn" onclick="loadPreset('conti')">⛓ Conti Crypter</button>
                 <button class="preset-btn" onclick="loadPreset('lockbit')">LockBit Affiliate</button>
                 <button class="preset-btn" onclick="loadPreset('clean')">Zero-Match Post</button>
             </div>
         </div>
 
-        <div id="interceptError" style="display:none;color:#a56b64;font-size:11px;margin-bottom:10px;padding:8px 10px;background:rgba(165, 107, 100,0.08);border:1px solid rgba(165, 107, 100,0.2);border-radius:5px;"></div>
+        <div id="interceptError"></div>
 
-        <div style="display:flex;justify-content:flex-end;gap:10px;">
-            <button onclick="closeInterceptModal()" style="font-size:12px;padding:7px 16px;border-radius:5px;border:1px solid #1e293b;background:transparent;color:#475569;cursor:pointer;">Cancel</button>
-            <button id="interceptSubmitBtn" onclick="submitIntercept()" style="font-size:12px;font-weight:600;padding:7px 18px;border-radius:5px;border:1px solid rgba(125, 155, 176,0.4);background:rgba(125, 155, 176,0.1);color:#7d9bb0;cursor:pointer;">⚡ Analyze &amp; Correlate</button>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeInterceptModal()">Cancel</button>
+            <button id="interceptSubmitBtn" class="btn-submit" onclick="submitIntercept()">⚡ Analyze &amp; Correlate</button>
         </div>
     </div>
 </div>
@@ -495,13 +1177,13 @@ function bootLoadFeeds() {
         document.getElementById('stats-count').textContent = globalData.length;
         document.getElementById('stats-badge').style.display = '';
         renderList(globalData);
-    }).catch(err => {
-        document.getElementById('targets').innerHTML = `<div style="color:#a56b64;font-size:11px;text-align:center;padding:12px;">Failed to reach API server.</div>`;
+    }).catch(() => {
+        document.getElementById('targets').innerHTML = `<div style="color:var(--red);font-size:11px;text-align:center;padding:16px;">Failed to reach API server.</div>`;
     });
 }
 bootLoadFeeds();
 
-// ── Export (CSV / JSON / Report) ────────────────────────────────────────
+// ── Export ───────────────────────────────────────────────────────────────
 async function exportResults(fmt) {
     const start = document.getElementById('timelineStart').value;
     const end = document.getElementById('timelineEnd').value;
@@ -521,12 +1203,12 @@ async function exportResults(fmt) {
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
         showToast(`Exported ${fmt.toUpperCase()}`);
-    } catch (err) {
+    } catch {
         showToast('Export failed — check API connection');
     }
 }
 
-// ── Timeline Filter ──────────────────────────────────────────────────────
+// ── Timeline Filter ───────────────────────────────────────────────────────
 function applyTimelineFilter() {
     const start = document.getElementById('timelineStart').value;
     const end = document.getElementById('timelineEnd').value;
@@ -550,7 +1232,7 @@ function clearTimelineFilter() {
     bootLoadFeeds();
 }
 
-// ── Advanced Correlation: Infra Scan + Persona Link ─────────────────────
+// ── Advanced Correlation ─────────────────────────────────────────────────
 async function runInfraScan() {
     const onion = document.getElementById('infraOnionInput').value.trim();
     const out = document.getElementById('infraScanResult');
@@ -560,15 +1242,15 @@ async function runInfraScan() {
         const res = await fetch(`${API_BASE}/api/v1/infra/scan?onion=${encodeURIComponent(onion)}`);
         const d = await res.json();
         if (d.status === 'no_data') {
-            out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
+            out.innerHTML = `<span style="color:var(--overlay0)">${esc(d.note)}</span>`;
         } else {
             const origin = d.likely_clearnet_origin || {};
-            out.innerHTML = `<span style="color:#6a9a80;">Confidence: ${d.confidence}%</span> · ` +
+            out.innerHTML = `<span style="color:var(--teal)">Confidence: ${d.confidence}%</span> · ` +
                 `Banner: ${esc(d.indicators.default_service_banner || 'none')} · ` +
                 `SSL reuse: ${d.indicators.ssl_certificate_reused_on_clearnet.found ? esc(d.indicators.ssl_certificate_reused_on_clearnet.clearnet_domain) : 'none'} · ` +
-                `Likely origin: ${esc(origin.ip || 'unknown')}<br><span style="color:#475569;">${esc(d.note)}</span>`;
+                `Origin: ${esc(origin.ip || 'unknown')}<br><span style="color:var(--overlay0)">${esc(d.note)}</span>`;
         }
-    } catch (err) {
+    } catch {
         out.textContent = 'Scan request failed.';
     }
 }
@@ -583,20 +1265,24 @@ async function runPersonaLink() {
         const res = await fetch(`${API_BASE}/api/v1/persona/link?alias_a=${encodeURIComponent(a)}&alias_b=${encodeURIComponent(b)}`);
         const d = await res.json();
         if (d.status === 'no_data') {
-            out.innerHTML = `<span style="color:#64748b;">${esc(d.note)}</span>`;
+            out.innerHTML = `<span style="color:var(--overlay0)">${esc(d.note)}</span>`;
         } else {
-            out.innerHTML = `<span style="color:#9483ab;">${d.migration_confidence}% migration confidence</span> · ${esc(d.verdict)}<br><span style="color:#475569;">${esc(d.note)}</span>`;
+            out.innerHTML = `<span style="color:var(--mauve)">${d.migration_confidence}% migration confidence</span> · ${esc(d.verdict)}<br><span style="color:var(--overlay0)">${esc(d.note)}</span>`;
         }
-    } catch (err) {
+    } catch {
         out.textContent = 'Comparison request failed.';
     }
 }
 
 function esc(s) { const d = document.createElement('div'); d.appendChild(document.createTextNode(String(s))); return d.innerHTML; }
+
 function confColor(c) {
-    return c > 80 ? { fill: '#73977e', glow: '#73977e' } : c > 40 ? { fill: '#ab8a5a', glow: '#96793f' } : { fill: '#a56b64', glow: '#a56b64' };
+    if (c > 80) return { fill: '#a6e3a1' };
+    if (c > 40) return { fill: '#f9e2af' };
+    return { fill: '#f38ba8' };
 }
 
+// ── Search ────────────────────────────────────────────────────────────────
 function handleSearchInput(e) {
     const val = e.target.value.trim();
     const badge = document.getElementById('queryBadge');
@@ -607,17 +1293,21 @@ function handleSearchInput(e) {
     }
 
     let type = "ALIAS / KEYWORD";
-    let color = "#64748b";
-    if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "#7086a8"; }
-    else if (val.length === 76 && /^[0-9a-fA-F]+$/.test(val)) { type = "TOX ID"; color = "#6f9299"; }
-    else if ((val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) && val.length >= 25) { type = "BTC WALLET"; color = "#ab8a5a"; }
-    else if ((val.startsWith('4') && val.length >= 90) || (val.startsWith('8') && val.length >= 90)) { type = "MONERO (XMR)"; color = "#b28058"; }
+    let color = "var(--overlay1)";
+    if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "var(--blue)"; }
+    else if (val.length === 76 && /^[0-9a-fA-F]+$/.test(val)) { type = "TOX ID"; color = "var(--sky)"; }
+    else if ((val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) && val.length >= 25) { type = "BTC WALLET"; color = "var(--yellow)"; }
+    else if ((val.startsWith('4') && val.length >= 90) || (val.startsWith('8') && val.length >= 90)) { type = "MONERO (XMR)"; color = "var(--peach)"; }
 
     badge.style.display = 'inline-block';
-    badge.style.background = `${color}22`;
+    badge.style.background = 'var(--surface0)';
     badge.style.color = color;
-    badge.style.border = `1px solid ${color}55`;
-    badge.textContent = `Target Type: ${type}`;
+    badge.style.border = '1px solid var(--surface1)';
+    badge.style.padding = '2px 8px';
+    badge.style.borderRadius = '4px';
+    badge.style.fontSize = '10px';
+    badge.style.fontFamily = 'ui-monospace, monospace';
+    badge.textContent = `↳ ${type}`;
 
     const q = val.toLowerCase();
     const filtered = globalData.flatMap(t => {
@@ -627,7 +1317,7 @@ function handleSearchInput(e) {
             sHits = t.deanonymization_results.filter(s => s.suspect_name.toLowerCase().startsWith(q));
         } else {
             aHit = t.darkweb_alias.toLowerCase().includes(q);
-            sHits = t.deanonymization_results.filter(s => 
+            sHits = t.deanonymization_results.filter(s =>
                 s.suspect_name.toLowerCase().includes(q) || s.evidence.some(ev => ev.toLowerCase().includes(q))
             );
         }
@@ -637,6 +1327,7 @@ function handleSearchInput(e) {
     renderList(filtered);
 }
 
+// ── Render List ───────────────────────────────────────────────────────────
 function renderList(threats) {
     const wrap = document.getElementById('targets');
     wrap.innerHTML = '';
@@ -645,7 +1336,7 @@ function renderList(threats) {
     rows.sort((a, b) => b.s.confidence_score - a.s.confidence_score);
 
     if (rows.length === 0) {
-        wrap.innerHTML = '<div style="color:#334155;font-size:12px;text-align:center;margin-top:24px;">No matching indicators found.</div>';
+        wrap.innerHTML = '<div style="color:var(--overlay0);font-size:11px;text-align:center;margin-top:24px;padding:0 12px;">No matching indicators found.</div>';
         return;
     }
 
@@ -654,18 +1345,16 @@ function renderList(threats) {
         const col = confColor(c);
         const card = document.createElement('div');
         card.className = 'suspect-card';
-        card.style.padding = '10px 11px';
-        const customBadge = t.is_custom ? `<span style="font-size:9px;font-weight:700;color:#7d9bb0;border:1px solid rgba(125, 155, 176,0.4);padding:1px 5px;border-radius:3px;background:rgba(125, 155, 176,0.08);display:inline-block;margin-top:3px;">● LIVE INTERCEPT</span>` : '';
+
+        const liveBadge = t.is_custom ? `<span class="live-badge">● LIVE INTERCEPT</span>` : '';
 
         card.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                <div style="flex:1;min-width:0;padding-right:8px;">
-                    <p style="font-size:12px;font-weight:600;color:#67e8f9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.suspect_name)}</p>
-                    <p style="font-size:10px;color:#475569;margin-top:2px;">alias: <span style="color:#c48f8a;font-family:ui-monospace,monospace;">${esc(t.darkweb_alias)}</span></p>
-                    ${customBadge}
-                </div>
-                <span style="font-size:10px;font-weight:700;color:${col.fill};border:1px solid ${col.fill}33;padding:2px 6px;border-radius:4px;background:${col.fill}0d;">${c}%</span>
+            <div class="card-header">
+                <span class="card-name">${esc(s.suspect_name)}</span>
+                <span class="conf-badge" style="color:${col.fill};background:${col.fill}12;border:1px solid ${col.fill}30;display:none">${c}%</span>
             </div>
+            <div class="card-alias">alias: <em>${esc(t.darkweb_alias)}</em></div>
+            ${liveBadge}
             <div class="conf-bar">
                 <div class="conf-fill" style="width:${c}%;background:${col.fill}"></div>
             </div>
@@ -681,11 +1370,11 @@ function renderList(threats) {
     });
 }
 
+// ── Render Matrix ─────────────────────────────────────────────────────────
 function renderMatrix(suspect, threat) {
-    document.getElementById('matrixSuspectName').textContent = `${suspect.suspect_name} [${suspect.surface_platform}]`;
+    document.getElementById('matrixSuspectName').textContent = `${suspect.suspect_name} · ${suspect.surface_platform}`;
     const b = suspect.breakdown || {};
 
-    // Prefill Advanced Correlation inputs from context where possible.
     const onionHit = threat && threat.extracted_indicators && threat.extracted_indicators.onion_urls
         ? threat.extracted_indicators.onion_urls[0] : '';
     document.getElementById('infraOnionInput').value = onionHit || '';
@@ -703,9 +1392,9 @@ function renderMatrix(suspect, threat) {
         valElem.textContent = `${score}%`;
         barElem.style.width = `${Math.min((score / maxCap) * 100, 100)}%`;
 
-        if (score >= 80) { statElem.textContent = "CONFIRMED"; statElem.style.color = "#73977e"; } 
-        else if (score > 0) { statElem.textContent = "MATCHED"; statElem.style.color = "#7d9bb0"; } 
-        else { statElem.textContent = "NO MATCH"; statElem.style.color = "#64748b"; }
+        if (score >= 80) { statElem.textContent = "CONFIRMED"; }
+        else if (score > 0) { statElem.textContent = "MATCHED"; }
+        else { statElem.textContent = "—"; }
     };
 
     updateCard('mCryptoVal', 'mCryptoBar', 'mCryptoStatus', b.crypto || 0);
@@ -718,11 +1407,12 @@ function renderMatrix(suspect, threat) {
     updateCard('mTempVal', 'mTempBar', 'mTempStatus', b.temporal || 0);
 }
 
+// ── Render Graph ──────────────────────────────────────────────────────────
 function renderGraph(threat, suspect) {
     const alias = threat.darkweb_alias;
     const realName = suspect.suspect_name;
     const lbl = document.getElementById('activeTargetLabel');
-    lbl.textContent = `Tracing: ${realName}`;
+    lbl.textContent = realName;
     lbl.style.display = '';
 
     const els = [
@@ -732,11 +1422,11 @@ function renderGraph(threat, suspect) {
     ];
 
     const CAT_DEFS = {
-        btc:   { id: 'N_CAT_BTC',   label: '⛓ BLOCKCHAIN', prefix: 'Blockchain Match: ', color: 'btc' },
-        email: { id: 'N_CAT_EMAIL', label: '✉ EMAIL', prefix: 'Email Match: ', color: 'email' },
-        comms: { id: 'N_CAT_COMMS', label: 'COMMS', prefix: 'Comms Match: ', color: 'comms' },
-        infra: { id: 'N_CAT_INFRA', label: 'INFRASTRUCTURE', prefix: 'Infrastructure Match: ', color: 'infra' },
-        stylo: { id: 'N_CAT_STYLO', label: '✍ STYLOMETRY', prefix: 'Stylometry Match: ', color: 'stylo' }
+        btc:   { id: 'N_CAT_BTC',   label: '⛓ CRYPTO',  prefix: 'Blockchain Match: ', color: 'btc' },
+        email: { id: 'N_CAT_EMAIL', label: '✉ EMAIL',    prefix: 'Email Match: ',       color: 'email' },
+        comms: { id: 'N_CAT_COMMS', label: 'COMMS',      prefix: 'Comms Match: ',       color: 'comms' },
+        infra: { id: 'N_CAT_INFRA', label: 'INFRA',      prefix: 'Infrastructure Match: ', color: 'infra' },
+        stylo: { id: 'N_CAT_STYLO', label: '✍ STYLO',   prefix: 'Stylometry Match: ',  color: 'stylo' }
     };
 
     const buckets = { btc: [], email: [], comms: [], infra: [], stylo: [] };
@@ -752,10 +1442,8 @@ function renderGraph(threat, suspect) {
     Object.entries(buckets).forEach(([key, items]) => {
         if (items.length === 0) return;
         const cat = CAT_DEFS[key];
-
         els.push({ data: { id: cat.id, label: cat.label, nt: 'cat', color: cat.color } });
         els.push({ data: { source: 'N_IDENTITY', target: cat.id, et: 'branch', color: cat.color } });
-
         items.forEach((ev, i) => {
             const raw = ev.replace(cat.prefix, '');
             const display = (key === 'btc') ? (raw.substring(0, 6) + '…' + raw.slice(-4)) : raw;
@@ -771,78 +1459,80 @@ function renderGraph(threat, suspect) {
     cy = cytoscape({
         container: document.getElementById('cy'),
         elements: els,
-        minZoom: 0.55,
-        maxZoom: 2.2,
-        wheelSensitivity: 0.25,
+        minZoom: 0.4,
+        maxZoom: 2.5,
+        wheelSensitivity: 0.2,
         style: [
             {
                 selector: 'node',
                 style: {
                     'label': 'data(label)',
-                    'color': '#94a3b8',
+                    'color': '#a6adc8',
                     'font-size': '10px',
                     'text-valign': 'bottom',
-                    'text-margin-y': 6,
-                    'background-color': '#1e293b',
+                    'text-margin-y': 5,
+                    'background-color': '#313244',
                     'font-family': 'ui-monospace, monospace',
-                    'text-outline-color': '#070a12',
+                    'text-outline-color': '#11111b',
                     'text-outline-width': 2
                 }
             },
             {
                 selector: 'node[nt="identity"]',
                 style: {
-                    'background-color': '#5f7e69', 'width': 48, 'height': 48, 'color': '#b6cdbf',
-                    'font-weight': 'bold', 'font-size': '11px', 'shadow-blur': 25,
-                    'shadow-color': '#73977e', 'shadow-opacity': 0.8
+                    'background-color': '#40664a', 'width': 46, 'height': 46,
+                    'color': '#a6e3a1', 'font-weight': 'bold', 'font-size': '11px'
                 }
             },
             {
                 selector: 'node[nt="alias"]',
                 style: {
-                    'background-color': '#8f544e', 'width': 42, 'height': 42, 'color': '#cf9f9a',
-                    'font-weight': 'bold', 'shadow-blur': 20, 'shadow-color': '#a56b64', 'shadow-opacity': 0.7
+                    'background-color': '#7a3d47', 'width': 38, 'height': 38,
+                    'color': '#f38ba8', 'font-weight': 'bold'
                 }
             },
             {
                 selector: 'node[nt="cat"]',
-                style: { 'width': 32, 'height': 32, 'font-size': '9px', 'font-weight': 'bold' }
+                style: { 'width': 30, 'height': 30, 'font-size': '9px', 'font-weight': 'bold' }
             },
-            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#7d6642', 'color': '#d9c9a3', 'shadow-blur': 16, 'shadow-color': '#ab8a5a', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#4d5f80', 'color': '#a9b8cc', 'shadow-blur': 16, 'shadow-color': '#7086a8', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="comms"]', style: { 'background-color': '#4f6a6f', 'color': '#67e8f9', 'shadow-blur': 16, 'shadow-color': '#6f9299', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="infra"]', style: { 'background-color': '#4c7060', 'color': '#a9c9b7', 'shadow-blur': 16, 'shadow-color': '#6a9a80', 'shadow-opacity': 0.7 } },
-            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#564a68', 'color': '#c3b6cf', 'shadow-blur': 16, 'shadow-color': '#9483ab', 'shadow-opacity': 0.7 } },
+            { selector: 'node[nt="cat"][color="btc"]',   style: { 'background-color': '#6b5a2d', 'color': '#f9e2af' } },
+            { selector: 'node[nt="cat"][color="email"]', style: { 'background-color': '#2e3f61', 'color': '#89b4fa' } },
+            { selector: 'node[nt="cat"][color="comms"]', style: { 'background-color': '#2b5060', 'color': '#89dceb' } },
+            { selector: 'node[nt="cat"][color="infra"]', style: { 'background-color': '#2b5048', 'color': '#94e2d5' } },
+            { selector: 'node[nt="cat"][color="stylo"]', style: { 'background-color': '#4a3660', 'color': '#cba6f7' } },
 
-            { selector: 'node[nt="indicator"]', style: { 'width': 13, 'height': 13, 'font-size': '9px', 'font-weight': '500' } },
-            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#96784e', 'color': '#d9c9a3' } },
-            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#5f749a', 'color': '#c7d1de' } },
-            { selector: 'node[nt="indicator"][color="comms"]', style: { 'background-color': '#5c7d83', 'color': '#a5f3fc' } },
-            { selector: 'node[nt="indicator"][color="infra"]', style: { 'background-color': '#5a8871', 'color': '#c2d9cc' } },
-            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#6b5c80', 'color': '#d6cbdd' } },
+            { selector: 'node[nt="indicator"]', style: { 'width': 11, 'height': 11, 'font-size': '9px' } },
+            { selector: 'node[nt="indicator"][color="btc"]',   style: { 'background-color': '#7d6a3a', 'color': '#f9e2af' } },
+            { selector: 'node[nt="indicator"][color="email"]', style: { 'background-color': '#3a4f75', 'color': '#89b4fa' } },
+            { selector: 'node[nt="indicator"][color="comms"]', style: { 'background-color': '#386070', 'color': '#89dceb' } },
+            { selector: 'node[nt="indicator"][color="infra"]', style: { 'background-color': '#366055', 'color': '#94e2d5' } },
+            { selector: 'node[nt="indicator"][color="stylo"]', style: { 'background-color': '#584472', 'color': '#cba6f7' } },
 
-            { selector: 'edge', style: { 'width': 1.2, 'line-color': '#1e293b', 'curve-style': 'bezier', 'opacity': 0.6 } },
+            { selector: 'edge', style: { 'width': 1, 'line-color': '#45475a', 'curve-style': 'bezier', 'opacity': 0.7 } },
             {
                 selector: 'edge[et="identifies"]',
-                style: { 'line-color': '#a56b64', 'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#a56b64', 'width': 2, 'opacity': 0.8 }
+                style: { 'line-color': '#f38ba8', 'line-style': 'dashed', 'target-arrow-shape': 'triangle', 'target-arrow-color': '#f38ba8', 'width': 1.5, 'opacity': 0.85 }
             },
-            { selector: 'edge[et="branch"]', style: { 'width': 1.8, 'opacity': 0.75 } },
-            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#ab8a5a' } },
-            { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#7086a8' } },
-            { selector: 'edge[et="branch"][color="comms"]', style: { 'line-color': '#6f9299' } },
-            { selector: 'edge[et="branch"][color="infra"]', style: { 'line-color': '#6a9a80' } },
-            { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#9483ab' } },
-            { selector: 'edge[et="leaf"]', style: { 'width': 1.5, 'opacity': 0.45, 'line-style': 'dashed', 'line-color': '#64748b' } }
+            { selector: 'edge[et="branch"]', style: { 'width': 1.5, 'opacity': 0.75 } },
+            { selector: 'edge[et="branch"][color="btc"]',   style: { 'line-color': '#f9e2af' } },
+            { selector: 'edge[et="branch"][color="email"]', style: { 'line-color': '#89b4fa' } },
+            { selector: 'edge[et="branch"][color="comms"]', style: { 'line-color': '#89dceb' } },
+            { selector: 'edge[et="branch"][color="infra"]', style: { 'line-color': '#94e2d5' } },
+            { selector: 'edge[et="branch"][color="stylo"]', style: { 'line-color': '#cba6f7' } },
+            { selector: 'edge[et="leaf"]', style: { 'width': 1, 'opacity': 0.35, 'line-style': 'dashed', 'line-color': '#585b70' } }
         ],
         layout: {
-            name: 'cose', animate: true, animationDuration: 700, fit: true, padding: 50, randomize: false, componentSpacing: 100,
-            nodeRepulsion: function() { return 450000; }, nodeOverlap: 20,
-            idealEdgeLength: function(edge) {
-                if (edge.data('et') === 'identifies') return 100;
-                if (edge.data('et') === 'branch') return 80;
-                return 45;
+            name: 'cose', animate: true, animationDuration: 600, fit: true, padding: 48, randomize: false,
+            componentSpacing: 80,
+            nodeRepulsion: () => 480000,
+            nodeOverlap: 20,
+            idealEdgeLength: edge => {
+                if (edge.data('et') === 'identifies') return 110;
+                if (edge.data('et') === 'branch') return 75;
+                return 40;
             },
-            edgeElasticity: function() { return 100; }, nestingFactor: 5, gravity: 80, numIter: 1000, initialTemp: 200, coolingFactor: 0.95, minTemp: 1.0
+            edgeElasticity: () => 100,
+            nestingFactor: 5, gravity: 80, numIter: 1000, initialTemp: 200, coolingFactor: 0.95, minTemp: 1.0
         }
     });
 
@@ -857,10 +1547,11 @@ function renderGraph(threat, suspect) {
     cy.on('mouseout', 'node', () => { tooltip.style.display = 'none'; });
 }
 
+// ── Modal / Presets ───────────────────────────────────────────────────────
 const PRESETS = {
-    conti: { author: 'shadow_broker_99', content: 'Need a FUD crypter. AV bypass must be 100%. Escrow accepted. Contact bentley_crypter@protonmail.com. Payment to 1BentJeyCryptABC123DEF456GH789JK.' },
+    conti:   { author: 'shadow_broker_99', content: 'Need a FUD crypter. AV bypass must be 100%. Escrow accepted. Contact bentley_crypter@protonmail.com. Payment to 1BentJeyCryptABC123DEF456GH789JK.' },
     lockbit: { author: 'anon_affiliate_01', content: 'LockBit affiliate program recruiting. Bug bounty rewards active. Contact supp_admin@lockbit.io. Payouts via 1LockBitSuppAddress99281746283748.' },
-    clean: { author: 'random_user_404', content: 'Looking for someone to help with general network config. DM me on Telegram @netconfig99.' }
+    clean:   { author: 'random_user_404', content: 'Looking for someone to help with general network config. DM me on Telegram @netconfig99.' }
 };
 
 function openInterceptModal() {
@@ -885,29 +1576,28 @@ function loadPreset(key) {
 }
 
 function showToast(msg) {
-    const t = document.createElement('div'); t.className = 'intercept-toast'; t.textContent = msg;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
+    const t = document.createElement('div');
+    t.className = 'intercept-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 
 function handleFileSelect(e) {
     const file = (e.target && e.target.files && e.target.files[0])
                || (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = function (ev) {
+    reader.onload = function(ev) {
         const text = ev.target.result || '';
         document.getElementById('interceptContent').value = text;
         const aliasInput = document.getElementById('interceptAlias');
-        if (!aliasInput.value.trim()) {
-            aliasInput.value = file.name.replace(/\.[^/.]+$/, '');
-        }
+        if (!aliasInput.value.trim()) aliasInput.value = file.name.replace(/\.[^/.]+$/, '');
         const kb = (file.size / 1024).toFixed(1);
-        document.getElementById('fileNameDisplay').textContent =
-            `✓  ${file.name}  (${kb} KB — ${text.split('\n').length} lines)`;
+        document.getElementById('fileNameDisplay').textContent = `✓  ${file.name}  (${kb} KB — ${text.split('\n').length} lines)`;
         document.getElementById('fileInfoBadge').style.display = 'block';
     };
-    reader.onerror = function () {
+    reader.onerror = function() {
         const errDiv = document.getElementById('interceptError');
         errDiv.textContent = 'Could not read file. Try a different file or paste manually.';
         errDiv.style.display = 'block';
@@ -915,7 +1605,7 @@ function handleFileSelect(e) {
     reader.readAsText(file);
 }
 
-(function () {
+(function() {
     const zone = document.getElementById('dropZone');
     if (!zone) return;
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
@@ -947,15 +1637,13 @@ async function submitIntercept() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const { result } = await res.json();
         closeInterceptModal();
-
         globalData.unshift(result);
         document.getElementById('stats-count').textContent = globalData.length;
         renderList(globalData);
-
         const firstCard = document.getElementById('targets').querySelector('.suspect-card');
         if (firstCard) firstCard.click();
         showToast('Live Intercept Correlated Successfully');
-    } catch (err) {
+    } catch(err) {
         errDiv.textContent = `Analysis failed: ${err.message}`;
         errDiv.style.display = 'block';
     } finally {
