@@ -52,7 +52,12 @@ def _parse_dt(value: Optional[str]) -> Optional[datetime]:
 
 def _analyze_post(author: str, content: str, timestamp: Optional[str], is_custom: bool) -> dict:
     iocs = _extractor.extract(content)
-    suspects = _correlator.calculate_risk(iocs, content)
+    suspects = _correlator.calculate_risk(
+        iocs,
+        content,
+        post_author=author,
+        timestamp=timestamp,
+    )
     return {
         "darkweb_alias": author,
         "extracted_indicators": iocs,
@@ -289,12 +294,46 @@ def infra_scan(onion: str = Query(..., description="Onion address to check for m
     }
 
 
-# Persona / stylometric linkage (seeded placeholder)
 
-_PERSONA_LINK_SEED = {
-    frozenset({"Bentley", "LockBitSupp"}): {"stylometric_similarity": 41, "shared_ttps": ["escrow", "affiliate"], "migration_confidence": 37, "verdict": "Weak overlap — likely distinct personas"},
-    frozenset({"Garnet", "Bravo"}): {"stylometric_similarity": 74, "shared_ttps": ["affiliate", "ransom", "payload"], "migration_confidence": 69, "verdict": "Plausible persona migration (rebrand pattern)"},
-}
+# Persona / stylometric linkage — live computation using the NLP engines.
+# No more hardcoded seed: any two aliases can be compared in real time.
+
+def _get_actor_corpus(alias: str) -> str:
+    """
+    Build a text corpus for an alias by combining:
+      1. Their OSINT database stylometry markers + any past_posts
+      2. All dark-web posts in the mock feed (and user feed) attributed to this alias
+    Returns a lower-cased blob suitable for TF-IDF ingestion.
+    """
+    alias_lower = alias.strip().lower()
+
+    # Look up the actor profile by surface_alias
+    matched_profile = next(
+        (a for a in _osint_data if a.get("surface_alias", "").lower() == alias_lower),
+        None,
+    )
+    corpus_parts: list = []
+
+    if matched_profile:
+        corpus_parts += matched_profile.get("stylometry_markers", [])
+        corpus_parts += matched_profile.get("past_posts", [])
+
+    # Pull attributed posts from the mock feed
+    try:
+        with open("mock_feed.json", "r") as f:
+            mock_posts = json.load(f)
+        for post in mock_posts:
+            if post.get("author", "").lower() == alias_lower:
+                corpus_parts.append(post["content"])
+    except Exception:
+        pass
+
+    # Pull attributed posts from the custom/user feed
+    for post in _load_posts():
+        if post.get("author", "").lower() == alias_lower:
+            corpus_parts.append(post["content"])
+
+    return " ".join(corpus_parts).lower()
 
 
 @router.get("/persona/link")
@@ -302,28 +341,71 @@ def persona_link(
     alias_a: str = Query(..., description="Surface alias of the first persona"),
     alias_b: str = Query(..., description="Surface alias of the second persona"),
 ):
-    key = frozenset({alias_a.strip(), alias_b.strip()})
-    seed = _PERSONA_LINK_SEED.get(key)
+    """
+    Live persona linkage using three complementary signals:
 
-    if not seed:
-        return {
-            "status": "no_data",
-            "alias_a": alias_a,
-            "alias_b": alias_b,
-            "stylometric_similarity": 0,
-            "migration_confidence": 0,
-            "verdict": "insufficient data",
-            "note": (
-                "No stylometric comparison on file for this pair. This endpoint is "
-                "currently seeded with a couple of demo pairs; production would run "
-                "an embedding-based similarity model over each persona's post history."
-            ),
-        }
+    1. TF-IDF character n-gram cosine similarity on the combined post corpora
+       of both aliases — measures shared linguistic fingerprint.
+    2. Jaro-Winkler string edit distance between the two handle strings —
+       detects handle mutation / rebrand patterns (e.g. Garnet → Bravo).
+    3. Shared TTP vocabulary intersection — how many tactical terms appear
+       in both personas' attributed posts.
+
+    Migration confidence = weighted combination of all three signals.
+    """
+    corpus_a = _get_actor_corpus(alias_a)
+    corpus_b = _get_actor_corpus(alias_b)
+
+    # 1. TF-IDF stylometric similarity (0–100 %)
+    raw_stylo = _correlator.stylo_engine.score_pair(corpus_a, corpus_b)
+    stylometric_similarity = round(raw_stylo * 100, 1)
+
+    # 2. Jaro-Winkler alias edit distance (0–100 %)
+    alias_edit = round(_correlator.alias_engine.compare(alias_a, alias_b) * 100, 1)
+
+    # 3. Shared TTPs
+    shared_ttps = _correlator.ttp_engine.shared_ttps(corpus_a, corpus_b)
+    # Normalise: 5 shared TTPs → 50 %, 10 → 100 %
+    ttp_overlap_score = min(100.0, round(len(shared_ttps) * 10.0, 1))
+
+    # Migration confidence: weighted average of the three signals.
+    # Stylometry carries the most weight (behavioural fingerprint),
+    # alias similarity flags rebranding, TTP overlap confirms role continuity.
+    migration_confidence = round(
+        stylometric_similarity * 0.50 +
+        alias_edit             * 0.25 +
+        ttp_overlap_score      * 0.25,
+        1,
+    )
+
+    # Verdict classification
+    if migration_confidence >= 70:
+        verdict = "High likelihood of persona migration (rebrand/split pattern)"
+    elif migration_confidence >= 45:
+        verdict = "Plausible overlap — possible shared operator or rebrand"
+    elif migration_confidence >= 20:
+        verdict = "Weak overlap — likely distinct personas with overlapping vocabulary"
+    else:
+        verdict = "No significant linkage detected"
 
     return {
-        "status": "seeded_demo",
+        "status": "live",
         "alias_a": alias_a,
         "alias_b": alias_b,
-        **seed,
-        "note": "Synthetic demo data illustrating the intended output shape — not a verified stylometric result.",
+        "stylometric_similarity": stylometric_similarity,
+        "alias_edit_distance": alias_edit,
+        "ttp_overlap_score": ttp_overlap_score,
+        "shared_ttps": shared_ttps,
+        "migration_confidence": migration_confidence,
+        "verdict": verdict,
+        "methodology": {
+            "stylometry": "TF-IDF character n-gram (3–5) cosine similarity on attributed post corpora",
+            "alias_matching": "Jaro-Winkler string edit distance on handle strings",
+            "ttp_alignment": f"{len(shared_ttps)} shared tactical terms × 10% (capped at 100%)",
+        },
+        "note": (
+            "Computed live using the NLP engine — not demo seed data. "
+            "Corpus size is proportional to indexed post history for each alias."
+        ),
     }
+

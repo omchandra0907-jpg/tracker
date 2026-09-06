@@ -43,7 +43,12 @@ def analyze_threats():
     intelligence_report = []
     for post in darkweb_posts:
         extracted_iocs = extractor.extract(post["content"])
-        suspects = correlator.calculate_risk(extracted_iocs, post["content"])
+        suspects = correlator.calculate_risk(
+            extracted_iocs,
+            post["content"],
+            post_author=post.get("author", ""),
+            timestamp=post.get("timestamp"),
+        )
 
         intelligence_report.append({
             "darkweb_alias": post["author"],

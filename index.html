@@ -257,7 +257,7 @@
                             <span id="mCryptoVal" style="font-weight:700;color:#ab8a5a;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCryptoBar" style="height:100%;width:0%;background:#ab8a5atransition:width 0.35s;"></div>
+                            <div id="mCryptoBar" style="height:100%;width:0%;background:#ab8a5a;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -276,7 +276,7 @@
                             <span id="mEmailVal" style="font-weight:700;color:#7086a8;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mEmailBar" style="height:100%;width:0%;background:#7086a8transition:width 0.35s;"></div>
+                            <div id="mEmailBar" style="height:100%;width:0%;background:#7086a8;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -295,7 +295,7 @@
                             <span id="mCommsVal" style="font-weight:700;color:#6f9299;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mCommsBar" style="height:100%;width:0%;background:#6f9299transition:width 0.35s;"></div>
+                            <div id="mCommsBar" style="height:100%;width:0%;background:#6f9299;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -314,7 +314,7 @@
                             <span id="mInfraVal" style="font-weight:700;color:#6a9a80;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mInfraBar" style="height:100%;width:0%;background:#6a9a80transition:width 0.35s;"></div>
+                            <div id="mInfraBar" style="height:100%;width:0%;background:#6a9a80;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -333,7 +333,7 @@
                             <span id="mStyloVal" style="font-weight:700;color:#9483ab;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mStyloBar" style="height:100%;width:0%;background:#9483abtransition:width 0.35s;"></div>
+                            <div id="mStyloBar" style="height:100%;width:0%;background:#9483ab;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -352,7 +352,7 @@
                             <span id="mAliasVal" style="font-weight:700;color:#a56b64;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mAliasBar" style="height:100%;width:0%;background:#a56b64transition:width 0.35s;"></div>
+                            <div id="mAliasBar" style="height:100%;width:0%;background:#a56b64;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -371,7 +371,7 @@
                             <span id="mTtpVal" style="font-weight:700;color:#7d9bb0;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTtpBar" style="height:100%;width:0%;background:#7d9bb0transition:width 0.35s;"></div>
+                            <div id="mTtpBar" style="height:100%;width:0%;background:#7d9bb0;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -390,7 +390,7 @@
                             <span id="mTempVal" style="font-weight:700;color:#9c6672;">0%</span>
                         </div>
                         <div style="height:4px;background:#1e293b;border-radius:2px;overflow:hidden;">
-                            <div id="mTempBar" style="height:100%;width:0%;background:#9c6672transition:width 0.35s;"></div>
+                            <div id="mTempBar" style="height:100%;width:0%;background:#9c6672;transition:width 0.35s;"></div>
                         </div>
                     </div>
                 </div>
@@ -609,9 +609,9 @@ function handleSearchInput(e) {
     let type = "ALIAS / KEYWORD";
     let color = "#64748b";
     if (val.includes('@') && val.includes('.')) { type = "EMAIL SELECTOR"; color = "#7086a8"; }
-    else if (val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) { type = "BTC WALLET"; color = "#ab8a5a"; }
-    else if (val.startsWith('4') || val.startsWith('8')) { type = "MONERO (XMR)"; color = "#b28058"; }
-    else if (val.length === 76) { type = "TOX ID"; color = "#6f9299"; }
+    else if (val.length === 76 && /^[0-9a-fA-F]+$/.test(val)) { type = "TOX ID"; color = "#6f9299"; }
+    else if ((val.startsWith('1') || val.startsWith('3') || val.startsWith('bc1')) && val.length >= 25) { type = "BTC WALLET"; color = "#ab8a5a"; }
+    else if ((val.startsWith('4') && val.length >= 90) || (val.startsWith('8') && val.length >= 90)) { type = "MONERO (XMR)"; color = "#b28058"; }
 
     badge.style.display = 'inline-block';
     badge.style.background = `${color}22`;

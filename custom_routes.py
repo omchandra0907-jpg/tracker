@@ -55,9 +55,14 @@ def _save_post(author: str, content: str, timestamp: str) -> None:
         json.dump(posts, f, indent=2)
 
 
-def _analyze(author: str, content: str, timestamp: Optional[str] = None) -> dict:
+def _analyze(author: str, content: str, timestamp=None) -> dict:
     iocs = _extractor.extract(content)
-    suspects = _correlator.calculate_risk(iocs, content)
+    suspects = _correlator.calculate_risk(
+        iocs,
+        content,
+        post_author=author,
+        timestamp=timestamp,
+    )
     return {
         "darkweb_alias": author,
         "extracted_indicators": iocs,
